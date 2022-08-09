@@ -509,6 +509,7 @@ version = "0.1.0"
 dependencies = [
  "bat",
  "dirs",
+ "serde",
  "serde_json",
  "serde_yaml 0.9.4",
 ]
