@@ -1,5 +1,5 @@
 use bat::{Input, PagingMode, PrettyPrinter};
-use std::process::{Command, Stdio};
+use std::process::{Command, Stdio, Child};
 
 // pub fn print_themes() {
 //     let printer = PrettyPrinter::new();
@@ -26,6 +26,21 @@ pub fn pretty_print(string: String) {
         .paging_mode(PagingMode::Never)
         .print()
         .unwrap();
+}
+
+pub fn get_diff() -> Child {
+    Command::new("kubectl")
+        .env(
+            "KUBECTL_EXTERNAL_DIFF",
+            format!("{}", get_script()),
+        )
+        .arg("diff")
+        .arg("-f")
+        .arg("-")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap()
 }
 
 pub fn get_target() -> String {
