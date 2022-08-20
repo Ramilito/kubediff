@@ -9,7 +9,7 @@ use std::{
 pub fn diff() {
     let home_dir = dirs::home_dir().unwrap();
     let target = format!(
-        "{}/workspace/toca-boca/toca-days-platform/Services/kiali/k8s/dev",
+        "{}/workspace/toca-boca/toca-days-platform/Services/travel-service/k8s/local",
         home_dir.display()
     );
 
@@ -27,15 +27,13 @@ pub fn diff() {
 
     for document in serde_yaml::Deserializer::from_str(string.as_str()) {
         let v = Value::deserialize(document).unwrap();
-
-
         let string = serde_yaml::to_string(&v).unwrap();
 
         let mut diff = Command::new("kubectl")
-            // .env(
-            //     "KUBECTL_EXTERNAL_DIFF",
-            //     format!("{}/workspace/mine/kubediff/src/diff.sh", home_dir.display()),
-            // )
+            .env(
+                "KUBECTL_EXTERNAL_DIFF",
+                format!("{}/workspace/mine/kubediff/src/diff.sh", home_dir.display()),
+            )
             .arg("diff")
             .arg("-f")
             .arg("-")
@@ -51,9 +49,8 @@ pub fn diff() {
             .unwrap();
 
         let diff = diff.wait_with_output().unwrap();
-
-
         let string = String::from_utf8(diff.stdout.to_owned()).unwrap();
+
         PrettyPrinter::new()
             .input(
                 Input::from_bytes(&string.as_bytes())
