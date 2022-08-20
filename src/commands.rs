@@ -2,9 +2,36 @@ use bat::{Input, PagingMode, PrettyPrinter};
 use serde::Deserialize;
 use serde_yaml::Value;
 use std::{
-    io::{self, Write},
+    io::Write,
     process::{Command, Stdio},
 };
+
+fn printThemes() {
+    let printer = PrettyPrinter::new();
+    println!("Themes:");
+    for theme in printer.themes() {
+        println!("- {}", theme);
+    }
+}
+
+pub fn pretty_print(string: String) {
+    PrettyPrinter::new()
+        .input(
+            Input::from_bytes(&string.as_bytes())
+                .name("diff.yaml")
+                .kind("File"),
+        )
+        .header(true)
+        .grid(true)
+        .line_numbers(true)
+        .use_italics(true)
+        .highlight(line!() as usize)
+        .language("diff")
+        // .theme("sublime-snazzy")
+        .paging_mode(PagingMode::Never)
+        .print()
+        .unwrap();
+}
 
 pub fn diff() {
     let home_dir = dirs::home_dir().unwrap();
@@ -50,22 +77,6 @@ pub fn diff() {
 
         let diff = diff.wait_with_output().unwrap();
         let string = String::from_utf8(diff.stdout.to_owned()).unwrap();
-
-        PrettyPrinter::new()
-            .input(
-                Input::from_bytes(&string.as_bytes())
-                    .name("diff.yaml")
-                    .kind("File"),
-            )
-            .header(true)
-            .grid(true)
-            .line_numbers(true)
-            .use_italics(true)
-            .highlight(line!() as usize)
-            .language("diff")
-            .theme("1337")
-            .paging_mode(PagingMode::Never)
-            .print()
-            .unwrap();
+        pretty_print(string);
     }
 }
