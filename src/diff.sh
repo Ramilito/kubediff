@@ -9,7 +9,7 @@ if [[ ! $ANSIBLE_MODE = YES ]]; then
   DIFF_ARGS+=("--color=always")
 fi
 
-cat "$@"/* \
-  | yq e 'del(.metadata.managedFields)' \
-  | yq e 'del(.metadata.annotations == with_entries(select(.key == "kubectl.kubernetes.io/last-applied-configuration")))'
+find "$@"/* -type f  -print0 | xargs -0 -n 1 \
+  yq e -i 'del(.metadata.managedFields, .metadata.annotations == with_entries(select(.key == "kubectl.kubernetes.io/last-applied-configuration")))'
 
+diff "${DIFF_ARGS[@]}" "$@"   
