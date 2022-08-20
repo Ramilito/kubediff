@@ -33,7 +33,14 @@ pub fn pretty_print(string: String) {
         .unwrap();
 }
 
-pub fn get_target() {}
+pub fn get_target() -> String {
+    let home_dir = dirs::home_dir().unwrap();
+    let target = format!(
+        "{}/workspace/toca-boca/toca-days-platform/Services/travel-service/k8s/local",
+        home_dir.display()
+    );
+    target
+}
 
 pub fn get_build(target: &String) -> String {
     let output = Command::new("kustomize")
@@ -57,12 +64,7 @@ fn get_script() -> String {
 }
 
 pub fn diff() {
-    let home_dir = dirs::home_dir().unwrap();
-    let target = format!(
-        "{}/workspace/toca-boca/toca-days-platform/Services/travel-service/k8s/local",
-        home_dir.display()
-    );
-
+    let target = get_target();
     let build = get_build(&target);
 
     for document in serde_yaml::Deserializer::from_str(build.as_str()) {
