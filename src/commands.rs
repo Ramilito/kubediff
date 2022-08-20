@@ -6,13 +6,13 @@ use std::{
     process::{Command, Stdio},
 };
 
-fn printThemes() {
-    let printer = PrettyPrinter::new();
-    println!("Themes:");
-    for theme in printer.themes() {
-        println!("- {}", theme);
-    }
-}
+// pub fn print_themes() {
+//     let printer = PrettyPrinter::new();
+//     println!("Themes:");
+//     for theme in printer.themes() {
+//         println!("- {}", theme);
+//     }
+// }
 
 pub fn pretty_print(string: String) {
     PrettyPrinter::new()
@@ -27,19 +27,15 @@ pub fn pretty_print(string: String) {
         .use_italics(true)
         .highlight(line!() as usize)
         .language("diff")
-        // .theme("sublime-snazzy")
+        .theme("gruvbox-dark")
         .paging_mode(PagingMode::Never)
         .print()
         .unwrap();
 }
 
-pub fn diff() {
-    let home_dir = dirs::home_dir().unwrap();
-    let target = format!(
-        "{}/workspace/toca-boca/toca-days-platform/Services/travel-service/k8s/local",
-        home_dir.display()
-    );
+pub fn get_target() {}
 
+pub fn get_build(target: &String) -> String {
     let output = Command::new("kustomize")
         .arg("build")
         .arg(target)
@@ -50,17 +46,30 @@ pub fn diff() {
         .wait_with_output()
         .unwrap();
 
-    let string = String::from_utf8(output.stdout.to_owned()).unwrap();
+    String::from_utf8(output.stdout.to_owned()).unwrap()
+}
 
-    for document in serde_yaml::Deserializer::from_str(string.as_str()) {
+fn get_script() -> String {
+    let mut path = std::env::current_exe().unwrap();
+    path.pop();
+    path.push("diff.sh");
+    path.to_str().unwrap().to_string()
+}
+
+pub fn diff() {
+    let home_dir = dirs::home_dir().unwrap();
+    let target = format!(
+        "{}/workspace/toca-boca/toca-days-platform/Services/travel-service/k8s/local",
+        home_dir.display()
+    );
+
+    let build = get_build(&target);
+
+    for document in serde_yaml::Deserializer::from_str(build.as_str()) {
         let v = Value::deserialize(document).unwrap();
         let string = serde_yaml::to_string(&v).unwrap();
-
         let mut diff = Command::new("kubectl")
-            .env(
-                "KUBECTL_EXTERNAL_DIFF",
-                format!("{}/workspace/mine/kubediff/src/diff.sh", home_dir.display()),
-            )
+            .env("KUBECTL_EXTERNAL_DIFF", format!("{}", get_script()))
             .arg("diff")
             .arg("-f")
             .arg("-")
