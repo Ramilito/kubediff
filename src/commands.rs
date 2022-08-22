@@ -1,5 +1,5 @@
 use bat::{Input, PagingMode, PrettyPrinter};
-use std::process::{Command, Stdio, Child};
+use std::process::{Child, Command, Stdio};
 
 // pub fn print_themes() {
 //     let printer = PrettyPrinter::new();
@@ -30,10 +30,7 @@ pub fn pretty_print(string: String) {
 
 pub fn get_diff() -> Child {
     Command::new("kubectl")
-        .env(
-            "KUBECTL_EXTERNAL_DIFF",
-            format!("{}", get_script()),
-        )
+        .env("KUBECTL_EXTERNAL_DIFF", format!("{}", get_script()))
         .arg("diff")
         .arg("-f")
         .arg("-")
@@ -41,15 +38,6 @@ pub fn get_diff() -> Child {
         .stdout(Stdio::piped())
         .spawn()
         .unwrap()
-}
-
-pub fn get_target() -> String {
-    let home_dir = dirs::home_dir().unwrap();
-    let target = format!(
-        "{}/workspace/toca-boca/toca-days-platform/Services/travel-service/k8s/local",
-        home_dir.display()
-    );
-    target
 }
 
 pub fn get_build(target: &String) -> String {

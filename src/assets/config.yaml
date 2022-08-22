@@ -1,0 +1,6 @@
+configs:
+    include:
+        - "include_me"
+
+    exclude:
+        - "exclude_me"

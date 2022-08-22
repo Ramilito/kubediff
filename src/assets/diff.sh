@@ -1,4 +1,5 @@
 #!/bin/bash
+
 DIFF_ARGS=(
   "--minimal"
   "--width=120"
