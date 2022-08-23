@@ -20,7 +20,6 @@ pub fn pretty_print(string: String) {
         .grid(true)
         .line_numbers(true)
         .use_italics(true)
-        .highlight(line!() as usize)
         .language("diff")
         .theme("gruvbox-dark")
         .paging_mode(PagingMode::Never)
