@@ -1,2 +1,55 @@
 # kubediff
-Ever asked yourself, what is applied on my clusters?
+
+<details>
+  <summary>Table of Contents</summary>
+
+- [kubediff](#kubediff)
+  * [Showcase](#showcase)
+  * [About The Project](#about-the-project)
+    + [What](#what)
+    + [Why](#why)
+    + [How](#how)
+  * [Getting Started](#getting-started)
+    + [Prerequisite](#prerequisite)
+    + [Installation](#installation)
+  * [Usage](#usage)
+  * [Roadmap](#roadmap)
+  * [Troubleshooting](#troubleshooting))
+
+</details>
+
+## Showcase
+
+![showcase](https://raw.github.com/Ramilito/kubesess/main/docs/images/kubesess.gif)
+
+The showcase demonstrates the multiple sessions per shell feature, selecting items and fuzzy searching for them.
+The same features apply for handling namespace as well
+
+
+## About The Project
+
+### What
+
+### Why
+
+### How
+
+## Getting Started
+
+### Prerequisite
+
+* yq is needed for filtering 
+
+### Installation
+
+## Usage
+
+#### Aliases are provided for easier use, when sourced three aliases will be created.
+
+<!-- ROADMAP -->
+## Roadmap
+
+- [] Remove or include dependency on yq 
+
+## Troubleshooting
+
