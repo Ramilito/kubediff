@@ -5,7 +5,7 @@ build:
 	cp ./src/assets/config.yaml ./target/debug/
 
 .PHONY: build_local
-build_local:
+build_local: build
 	cargo build
 	mkdir -p ~/.kube/kubediff
 	cp ./src/assets/diff.sh ~/.kube/kubediff/
