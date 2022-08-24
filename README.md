@@ -20,12 +20,6 @@
 
 ## Showcase
 
-![showcase](https://raw.github.com/Ramilito/kubesess/main/docs/images/kubesess.gif)
-
-The showcase demonstrates the multiple sessions per shell feature, selecting items and fuzzy searching for them.
-The same features apply for handling namespace as well
-
-
 ## About The Project
 
 ### What
