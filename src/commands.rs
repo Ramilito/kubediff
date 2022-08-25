@@ -1,13 +1,14 @@
 use bat::{Input, PagingMode, PrettyPrinter};
 use std::process::{Child, Command, Stdio};
 
-// pub fn print_themes() {
-//     let printer = PrettyPrinter::new();
-//     println!("Themes:");
-//     for theme in printer.themes() {
-//         println!("- {}", theme);
-//     }
-// }
+#[allow(dead_code)]
+pub fn print_themes() {
+    let printer = PrettyPrinter::new();
+    println!("Themes:");
+    for theme in printer.themes() {
+        println!("- {}", theme);
+    }
+}
 
 pub fn pretty_print(string: String) {
     PrettyPrinter::new()

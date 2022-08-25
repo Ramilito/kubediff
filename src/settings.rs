@@ -11,6 +11,8 @@ pub struct Configs {
     pub include: Vec<String>,
     #[serde(default)]
     pub exclude: Vec<String>,
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    pub env: String,
 }
 
 pub fn expanduser(path: &str) -> String {
@@ -46,12 +48,13 @@ impl Settings {
 
     pub fn get_service_paths(&self) -> Result<HashSet<String>, Error> {
         let mut paths = HashSet::new();
+        let env: String = self.configs.env.to_string();
         for inc in &self.configs.include {
             let expanded = expanduser(&inc);
             for entry in glob(&expanded).expect("Failed to read glob pattern") {
                 match entry {
                     Ok(path) => {
-                        paths.insert(format!("{}/local", path.display().to_string()));
+                        paths.insert(format!("{}/{}", path.display().to_string(), env));
                     }
                     Err(e) => {
                         println!("{:?}", e);
@@ -64,7 +67,7 @@ impl Settings {
             for entry in glob(&expanded).expect("Failed to read glob pattern") {
                 match entry {
                     Ok(path) => {
-                        paths.remove(&format!("{}/local", path.display().to_string()));
+                        paths.remove(&format!("{}/{}", path.display().to_string(), env));
                     }
                     Err(e) => {
                         println!("{:?}", e);

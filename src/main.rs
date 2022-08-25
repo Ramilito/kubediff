@@ -1,20 +1,25 @@
 mod commands;
 mod settings;
 
+use clap::Parser;
 use commands::{get_build, get_diff, pretty_print};
 use serde::Deserialize;
 use serde_yaml::Value;
 use settings::Settings;
 use std::io::{self, Write};
 
-// include!(concat!(env!("OUT_DIR"), "/hello.rs"));
+#[derive(Parser)]
+#[clap(author, version, about, long_about = None)]
+pub struct Cli {
+    #[clap(short, long, value_parser)]
+    env: Option<String>,
+}
 
 fn main() -> Result<(), io::Error> {
-    // commands::printThemes();
-    let settings = Settings::load()?;
-
+    let args = Cli::parse();
+    let mut settings = Settings::load()?;
+    settings.configs.env = args.env.unwrap_or_default();
     let entry = Settings::get_service_paths(&settings)?;
-    // println!("{:?}", entry);
 
     for path in entry {
         let build = get_build(&path);
