@@ -24,8 +24,11 @@
 ## About The Project
 
 ### What
+This cli tool written in Rust is a wrapper around kubectl diff 
 
 ### Why
+Ever asked yourself, what is deployed on my cluster?
+Or, are all changes applied to the cluster? What have I forgotten to deploy? Has something changed without us knowing it? Forgot to add a change in git after hotfixing it in prod? Well, look no further...well a couple of lines further, I guess...
 
 ### How
 
