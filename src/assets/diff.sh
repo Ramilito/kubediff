@@ -16,6 +16,9 @@ find "$@" -type f -exec yq e -i 'del(
   .metadata.ownerReferences,
   .metadata.generation,
   .metadata.creationTimestamp,
+  .webhooks,
+  .data,
+  .spec.caBundle,
   .metadata.annotations == with_entries(select(.key == "kubectl.kubernetes.io/last-applied-configuration"))
   )' {} \;
 
