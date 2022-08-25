@@ -51,7 +51,7 @@ impl Settings {
             for entry in glob(&expanded).expect("Failed to read glob pattern") {
                 match entry {
                     Ok(path) => {
-                        paths.insert(format!("{}/dev", path.display().to_string()));
+                        paths.insert(format!("{}/local", path.display().to_string()));
                     }
                     Err(e) => {
                         println!("{:?}", e);
@@ -64,7 +64,7 @@ impl Settings {
             for entry in glob(&expanded).expect("Failed to read glob pattern") {
                 match entry {
                     Ok(path) => {
-                        paths.remove(&path.display().to_string());
+                        paths.remove(&format!("{}/local", path.display().to_string()));
                     }
                     Err(e) => {
                         println!("{:?}", e);
