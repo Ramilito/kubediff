@@ -20,6 +20,7 @@ fn main() -> Result<(), io::Error> {
         let build = get_build(&path);
         for document in serde_yaml::Deserializer::from_str(build.as_str()) {
             let v = Value::deserialize(document).unwrap();
+
             let string = serde_yaml::to_string(&v).unwrap();
             let mut diff = get_diff();
 
@@ -30,6 +31,7 @@ fn main() -> Result<(), io::Error> {
                 .unwrap();
 
             let diff = diff.wait_with_output().unwrap();
+
             let string = String::from_utf8(diff.stdout.to_owned()).unwrap();
 
             pretty_print(string);
