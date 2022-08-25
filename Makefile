@@ -13,7 +13,7 @@ build_local: build
 
 .PHONY: run
 run:
-	cargo run
+	cargo run -- -e local
 
 .PHONY: deploy_local
 deploy_local: build_local run
