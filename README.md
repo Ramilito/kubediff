@@ -19,6 +19,7 @@
 </details>
 
 ## Showcase
+![showcase](https://raw.github.com/Ramilito/kubesess/main/docs/images/kubesess.gif)
 
 ## About The Project
 
