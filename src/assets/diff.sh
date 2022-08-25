@@ -10,9 +10,12 @@ if [[ ! $ANSIBLE_MODE = YES ]]; then
   DIFF_ARGS+=("--color=always")
 fi
 
+
 find "$@" -type f -exec yq e -i 'del(
   .metadata.managedFields,
+  .metadata.ownerReferences,
   .metadata.generation,
+  .metadata.creationTimestamp
   .metadata.annotations == with_entries(select(.key == "kubectl.kubernetes.io/last-applied-configuration"))
   )' {} \;
 
