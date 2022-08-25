@@ -19,7 +19,7 @@
 </details>
 
 ## Showcase
-![showcase](https://raw.github.com/Ramilito/kubediff/main/docs/images/kubediff.gif)
+![showcase](https://raw.github.com/Ramilito/kubediff/main/docs/images/kubediff.png)
 
 ## About The Project
 
