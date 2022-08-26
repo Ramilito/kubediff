@@ -19,7 +19,7 @@
 </details>
 
 ## Showcase
-![showcase](https://raw.github.com/Ramilito/kubediff/main/docs/images/kubediff.png)
+![showcase](https://raw.github.com/Ramilito/kubediff/main/docs/images/kubediff-showcase.gif)
 
 _The showcase demonstrates an upgrade of agones_
 
