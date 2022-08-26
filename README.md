@@ -24,19 +24,27 @@
 ## About The Project
 
 ### What
-This cli tool written in Rust is a wrapper around kubectl diff 
+This cli tool written in Rust is a wrapper around kubectl diff and is supposed to diff one or multiple projects instead of
+single files against any environment you want, be it docker-desktop, dev, prod.
+
+It takes a glob pattern to one or more projects and beautifies the output so you can get an understanding on what differences there are.
 
 ### Why
 Ever asked yourself, what is deployed on my cluster?
-Or, are all changes applied to the cluster? What have I forgotten to deploy? Has something changed without us knowing it? Forgot to add a change in git after hotfixing it in prod? Well, look no further...well a couple of lines further, I guess...
+Or, are all changes applied to the cluster? 
+What differences are there between the environments? 
+What have I forgotten to deploy? 
+Has something changed without us knowing it? 
+Forgot to add a change in git after hotfixing it in prod? Well, look no further...well a couple of lines further, I guess...
 
 ### How
+We will loop over the projects files and run kubectl build, then pipe the output into kubectl diff and then process the output of that to make it pretty.
 
 ## Getting Started
 
 ### Prerequisite
 
-* yq is needed for filtering 
+* yq is needed for filtering
 
 ### Installation
 
@@ -47,7 +55,7 @@ Or, are all changes applied to the cluster? What have I forgotten to deploy? Has
 <!-- ROADMAP -->
 ## Roadmap
 
-- [] Remove or include dependency on yq 
+- [] Remove, make optional or include dependency on yq 
 
 ## Troubleshooting
 
