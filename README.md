@@ -50,9 +50,32 @@ We will loop over the projects files and run kubectl build, then pipe the output
 
 ## Usage
 
-#### Aliases are provided for easier use, when sourced three aliases will be created.
+### Configuration
+Se the available commands by running kubediff -h
 
-<!-- ROADMAP -->
+Regular usage would be to list your projects in the config.yaml file located at the install directory
+
+Few projects, will use the kustomization file located at that path:
+```
+configs:
+    include:
+        - "~/projectone/serviceone/k8s"
+        - "~/projecttwo/servicetwo/k8s"
+```
+
+Many projects (monorepo), will use glob pattern to find all services:
+```
+configs:
+    include:
+        - "~/monorepo/Services/**/k8s"
+```
+
+Many environments, will suffix the variable to end of the paths in ```config.yaml```, example below will look in "~/monorepo/Services/**/k8s/dev"
+
+```
+kubediff -e dev
+```
+
 ## Roadmap
 
 - [] Remove, make optional or include dependency on yq 
