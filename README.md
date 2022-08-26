@@ -35,12 +35,12 @@ single files against any environment you want, be it docker-desktop, dev, prod.
 It takes a glob pattern to one or more projects and beautifies the output so you can get an understanding on what differences there are.
 
 ### Why
-Ever asked yourself, what is deployed on my cluster?
-Or, are all changes applied to the cluster? 
-What differences are there between the environments? 
-What have I forgotten to deploy? 
-Has something changed without us knowing it? 
-Forgot to add a change in git after hotfixing it in prod? Well, look no further...well a couple of lines further, I guess...
+Ever asked yourself, what is deployed on my cluster? Or,
+* are all changes applied to the cluster? 
+* What differences are there between the environments? 
+* What have I forgotten to deploy? 
+* Has something changed without us knowing it? 
+* Forgot to add a change in git after hotfixing it in prod? Well, look no further...well a couple of lines further, I guess...
 
 
 ### How
