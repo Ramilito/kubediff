@@ -1,3 +1,20 @@
+SHELL := /bin/bash
+
+LATEST_TAG := $(shell git describe --abbrev=0 --tags $(git rev-list --tags --max-count=1))
+
+define bundle_release
+	@echo ""
+	if [[ "$(1)" == *"windows"* ]]; then  \
+		tar -czvf ./target/$(1)/release/kubediff_$(1).tar.gz src/assets/ ./target/$(1)/release/kubediff.exe; \
+	else \
+		tar -czvf ./target/$(1)/release/kubediff_$(1).tar.gz src/assets/ ./target/$(1)/release/kubediff; \
+	fi
+endef
+
+.PHONY: bundle_release
+bundle_release:
+	$(call bundle_release,${TARGET})
+	
 .PHONY: build
 build:
 	cargo build
