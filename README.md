@@ -56,7 +56,7 @@ Se the available commands by running kubediff -h
 Regular usage would be to list your projects in the config.yaml file located at the install directory
 
 
-_Few projects, will use the kustomization file located at that path:_
+**_Few projects, will use the kustomization file located at that path:_**
 ```
 configs:
     include:
@@ -64,14 +64,14 @@ configs:
         - "~/projecttwo/servicetwo/k8s"
 ```
 
-_Many projects (monorepo), will use glob pattern to find all services:_
+**_Many projects (monorepo), will use glob pattern to find all services:_**
 ```
 configs:
     include:
         - "~/monorepo/Services/**/k8s"
 ```
 
-_Many environments, will suffix the variable to end of the paths in ```config.yaml```, example below will look in "~/monorepo/Services/**/k8s/dev"_
+**_Many environments, will suffix the variable to end of the paths in ```config.yaml```, example below will look in "~/monorepo/Services/**/k8s/dev"_**
 ```
 kubediff -e dev
 ```
