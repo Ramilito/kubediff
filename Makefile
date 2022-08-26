@@ -6,8 +6,9 @@ build:
 
 .PHONY: build_local
 build_local: build
-	cargo build
+	cargo build --release
 	mkdir -p ~/.kube/kubediff
+	cp ./target/release/kubediff ~/.kube/kubediff/
 	cp ./src/assets/diff.sh ~/.kube/kubediff/
 	cp ./src/assets/config.yaml ~/.kube/kubediff/
 
