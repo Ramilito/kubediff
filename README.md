@@ -96,8 +96,8 @@ kubediff -e dev
 
 ## Roadmap
 
-- [] Remove, make optional or include dependency on yq 
-- [] Change theme with input 
+- [ ] Remove, make optional or include dependency on yq 
+- [ ] Change theme with input 
 
 ## Troubleshooting
 
