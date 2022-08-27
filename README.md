@@ -50,7 +50,7 @@ We will loop over the projects files and run kubectl build, then pipe the output
 
 ### Prerequisite
 
-* yq is needed for filtering
+* yq is needed for less clutter (can be made optional fairly easy)
 
 ### Installation
 Download and extract the binary.
