@@ -23,7 +23,7 @@
 _The showcase demonstrates an upgrade of agones_
 
 
-Solarized dark             |  Solarized Ocean
+Kubediff                   |  Kubectl diff
 :-------------------------:|:-------------------------:
 ![comparison_kubediff](https://raw.github.com/Ramilito/kubediff/main/docs/images/diff_kubediff.png)  |  ![comparison_original](https://raw.github.com/Ramilito/kubediff/main/docs/images/diff_original.png)
 _Notice that kubediff has removed the hated managedFields_
