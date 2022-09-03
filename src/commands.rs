@@ -4,10 +4,29 @@ use std::process::{Child, Command, Stdio};
 #[allow(dead_code)]
 pub fn print_themes() {
     let printer = PrettyPrinter::new();
+
+    println!("Syntaxes:");
+    for syntax in printer.syntaxes() {
+        println!("- {} ({})", syntax.name, syntax.file_extensions.join(", "));
+    }
+
+    println!();
+
     println!("Themes:");
     for theme in printer.themes() {
         println!("- {}", theme);
     }
+}
+
+pub fn pretty_print_path(string: String) {
+    PrettyPrinter::new()
+        .input(Input::from_bytes(&string.as_bytes()))
+        .header(true)
+        .grid(true)
+        .language("syslog")
+        .theme("OneHalfDark")
+        .print()
+        .unwrap();
 }
 
 pub fn pretty_print(string: String) {

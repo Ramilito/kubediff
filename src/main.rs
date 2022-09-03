@@ -2,7 +2,7 @@ mod commands;
 mod settings;
 
 use clap::Parser;
-use commands::{get_build, get_diff, pretty_print};
+use commands::{get_build, get_diff, pretty_print, pretty_print_path};
 use serde::Deserialize;
 use serde_yaml::Value;
 use settings::Settings;
@@ -18,10 +18,13 @@ pub struct Cli {
 fn main() -> Result<(), io::Error> {
     let args = Cli::parse();
     let mut settings = Settings::load()?;
+
     settings.configs.env = args.env.unwrap_or_default();
     let entry = Settings::get_service_paths(&settings)?;
 
     for path in entry {
+        pretty_print_path(format!("Path: {}", path.to_string()));
+
         let build = get_build(&path);
         for document in serde_yaml::Deserializer::from_str(build.as_str()) {
             let v = Value::deserialize(document).unwrap();
