@@ -29,6 +29,17 @@ pub fn pretty_print_path(string: String) {
         .unwrap();
 }
 
+pub fn pretty_print_info(string: String) {
+    PrettyPrinter::new()
+        .input(Input::from_bytes(&string.as_bytes()))
+        .header(false)
+        .grid(false)
+        .language("yaml")
+        .theme("OneHalfDark")
+        .print()
+        .unwrap();
+}
+
 pub fn pretty_print(string: String) {
     PrettyPrinter::new()
         .input(
