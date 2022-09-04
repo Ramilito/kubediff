@@ -1,8 +1,10 @@
 mod commands;
+mod print;
 mod settings;
 
 use clap::Parser;
-use commands::{get_build, get_diff, pretty_print, pretty_print_info, pretty_print_path};
+use print::{pretty_print, pretty_print_info, pretty_print_path};
+use commands::{get_build, get_diff};
 use serde::Deserialize;
 use serde_yaml::Value;
 use settings::Settings;
