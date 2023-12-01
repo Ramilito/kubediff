@@ -98,6 +98,11 @@ configs:
 kubediff -e dev
 ```
 
+**_You can also bypass the config by passing either -path or -inplace argument:_**
+```
+kubediff -p ~/path-to-kustomize-dir
+kubediff -i 
+```
 ## Roadmap
 
 - [ ] Remove, make optional or include dependency on yq 
