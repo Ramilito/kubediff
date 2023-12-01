@@ -93,7 +93,7 @@ configs:
         - "~/monorepo/Services/**/k8s"
 ```
 
-**_Many environments, will suffix the variable to end of the paths in ```config.yaml```, example below will look in "~/monorepo/Services/**/k8s/dev"_**
+**_Many environments, will suffix the variable to end of the paths in ```config.yaml```, example below will look in "~/monorepo/Services/\**/k8s/dev"_**
 ```
 kubediff -e dev
 ```
