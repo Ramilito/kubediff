@@ -1,4 +1,9 @@
-use std::process::{Child, Command, Stdio};
+use std::{
+    io,
+    process::{Child, Command, Stdio},
+};
+
+use crate::logger::Logger;
 
 pub struct Commands {}
 
@@ -15,18 +20,24 @@ impl Commands {
             .unwrap()
     }
 
-    pub fn get_build(target: &str) -> String {
+    pub fn get_build(logger: &Logger, target: &str) -> Result<String, io::Error> {
         let output = Command::new("kustomize")
             .arg("build")
             .arg(target)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .spawn()
-            .unwrap()
-            .wait_with_output()
-            .unwrap();
+            .stderr(Stdio::piped())
+            .spawn()?
+            .wait_with_output()?;
 
-        String::from_utf8(output.stdout.to_owned()).unwrap()
+        if output.status.success() {
+            return Ok(String::from_utf8(output.stdout).expect("Couldn't read stdout of command"));
+        } else {
+            logger.log_error(
+                String::from_utf8(output.stderr).expect("Couldn't read stderr of command"),
+            );
+            panic!("External command failed:")
+        }
     }
 }
 
