@@ -15,7 +15,7 @@ impl Commands {
             .unwrap()
     }
 
-    pub fn get_build(target: &String) -> String {
+    pub fn get_build(target: &str) -> String {
         let output = Command::new("kustomize")
             .arg("build")
             .arg(target)
