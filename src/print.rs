@@ -17,43 +17,45 @@ pub fn print_themes() {
     }
 }
 
-pub fn pretty_print_path(string: String) {
-    PrettyPrinter::new()
-        .input(Input::from_bytes(&string.as_bytes()))
-        .header(true)
-        .grid(true)
-        .language("syslog")
-        .theme("OneHalfDark")
-        .print()
-        .unwrap();
-}
+pub struct Pretty {}
+impl Pretty {
+    pub fn print_path(string: String) {
+        PrettyPrinter::new()
+            .input(Input::from_bytes(&string.as_bytes()))
+            .header(true)
+            .grid(true)
+            .language("syslog")
+            .theme("OneHalfDark")
+            .print()
+            .unwrap();
+    }
 
-pub fn pretty_print_info(string: String) {
-    PrettyPrinter::new()
-        .input(Input::from_bytes(&string.as_bytes()))
-        .header(false)
-        .grid(false)
-        .language("yaml")
-        .theme("OneHalfDark")
-        .print()
-        .unwrap();
-}
+    pub fn print_info(string: String) {
+        PrettyPrinter::new()
+            .input(Input::from_bytes(&string.as_bytes()))
+            .header(false)
+            .grid(false)
+            .language("yaml")
+            .theme("OneHalfDark")
+            .print()
+            .unwrap();
+    }
 
-pub fn pretty_print(string: String) {
-    PrettyPrinter::new()
-        .input(
-            Input::from_bytes(&string.as_bytes())
-                .name("diff.yaml")
-                .kind("File"),
-        )
-        .header(true)
-        .grid(true)
-        .line_numbers(true)
-        .use_italics(true)
-        .language("diff")
-        .theme("gruvbox-dark")
-        .paging_mode(PagingMode::Never)
-        .print()
-        .unwrap();
+    pub fn print(string: String) {
+        PrettyPrinter::new()
+            .input(
+                Input::from_bytes(&string.as_bytes())
+                    .name("diff.yaml")
+                    .kind("File"),
+            )
+            .header(true)
+            .grid(true)
+            .line_numbers(true)
+            .use_italics(true)
+            .language("diff")
+            .theme("gruvbox-dark")
+            .paging_mode(PagingMode::Never)
+            .print()
+            .unwrap();
+    }
 }
-
