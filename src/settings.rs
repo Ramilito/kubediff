@@ -5,6 +5,8 @@ use std::io::{BufReader, Error};
 use std::path::Path;
 use std::{fs::File, io};
 
+use crate::enums::LogLevel;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Configs {
     #[serde(default)]
@@ -13,6 +15,8 @@ pub struct Configs {
     pub exclude: Vec<String>,
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub env: String,
+    #[serde(default)]
+    pub log: LogLevel,
 }
 
 pub fn expanduser(path: &str) -> String {

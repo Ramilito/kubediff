@@ -1,9 +1,11 @@
 mod commands;
+mod enums;
 mod print;
 mod settings;
 
 use clap::Parser;
 use commands::{get_build, get_diff};
+use enums::LogLevel;
 use print::{pretty_print, pretty_print_info, pretty_print_path};
 use serde::Deserialize;
 use serde_yaml::Value;
@@ -23,13 +25,14 @@ pub struct Cli {
     inplace: bool,
     #[clap(short, long, value_parser)]
     path: Option<String>,
-    #[clap(short, long, action)]
-    verbose: bool,
+    #[clap(short, long, arg_enum)]
+    log: Option<LogLevel>,
 }
 
 fn main() -> Result<(), io::Error> {
     let args = Cli::parse();
     let mut entry = HashSet::new();
+    let mut settings = Settings::load()?;
 
     if args.inplace {
         let cwd = env::current_dir().unwrap().to_str().unwrap().to_string();
@@ -38,8 +41,6 @@ fn main() -> Result<(), io::Error> {
         let path = args.path.unwrap();
         entry.insert(path);
     } else {
-        let mut settings = Settings::load()?;
-
         settings.configs.env = args.env.unwrap_or_default();
         entry = Settings::get_service_paths(&settings)?;
     }
@@ -65,16 +66,33 @@ fn main() -> Result<(), io::Error> {
 
             if string.len() > 0 {
                 pretty_print(string);
-            } else if args.verbose {
-                pretty_print_info(format!(
-                    "No changes in: {:?} {:?} {:?}\n",
-                    v["apiVersion"].as_str().unwrap(),
-                    v["kind"].as_str().unwrap(),
-                    v["metadata"]["name"].as_str().unwrap()
-                ));
+            } else {
+                logger(
+                    args.log,
+                    settings.configs.log,
+                    format!(
+                        "No changes in: {:?} {:?} {:?}\n",
+                        v["apiVersion"].as_str().unwrap(),
+                        v["kind"].as_str().unwrap(),
+                        v["metadata"]["name"].as_str().unwrap()
+                    ),
+                );
             }
         }
     }
 
     Ok(())
+}
+
+fn logger(arg_log: Option<LogLevel>, config_log: LogLevel, message: String) {
+    match arg_log {
+        Some(LogLevel::Info) => pretty_print_info(message),
+        Some(LogLevel::Warning) => println!("warning"),
+        Some(LogLevel::Error) => println!("Error"),
+        None => match config_log {
+            LogLevel::Info => pretty_print_info(message),
+            LogLevel::Warning => println!("config: warning"),
+            LogLevel::Error => println!("config error"),
+        },
+    };
 }
