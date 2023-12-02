@@ -1,7 +1,11 @@
 use serde::Deserialize;
 use serde_yaml::Value;
 
-use std::{collections::HashSet, env, io::Write};
+use std::{
+    collections::HashSet,
+    env,
+    io::{self, Write},
+};
 
 use crate::{commands::Commands, logger::Logger, print::Pretty, settings::Settings, Cli};
 pub struct Process {}
@@ -23,10 +27,11 @@ impl Process {
         return targets;
     }
 
-    pub fn process_target(logger: &Logger, target: &str) {
+    pub fn process_target(logger: &Logger, target: &str) -> Result<(), io::Error> {
         Pretty::print_path(format!("Path: {}", target.to_string()));
 
-        let build = Commands::get_build(target);
+        let build = Commands::get_build(&logger, target)?;
+
         for document in serde_yaml::Deserializer::from_str(build.as_str()) {
             let v_result = Value::deserialize(document);
             match handle_deserialization_result(v_result) {
@@ -52,8 +57,10 @@ impl Process {
                 }
             }
         }
+        Ok(())
     }
 }
+
 fn handle_no_changes(logger: &Logger, v: &Value) {
     logger.log(format!(
         "No changes in: {:?} {:?} {:?}\n",

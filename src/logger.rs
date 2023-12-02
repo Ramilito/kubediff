@@ -24,4 +24,8 @@ impl Logger {
             },
         };
     }
+
+    pub fn log_error(&self, message: String) {
+        print!("{:?}", message);
+    }
 }
