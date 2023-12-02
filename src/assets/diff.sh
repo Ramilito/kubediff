@@ -19,7 +19,8 @@ find "$@" -type f -exec yq e -i 'del(
   .webhooks,
   .data,
   .spec.caBundle,
-  .metadata.annotations == with_entries(select(.key == "kubectl.kubernetes.io/last-applied-configuration"))
+  .metadata.annotations["kubectl.kubernetes.io/last-applied-configuration"],
+  .metadata.annotations["argocd.argoproj.io/tracking-id"]
   )' {} \;
 
 diff "${DIFF_ARGS[@]}" "$@" | awk '!/^diff/ {if ($1 ~ /(---|\+\+\+)/) {print $1, $2} else {print $0}}'    
