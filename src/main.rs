@@ -1,5 +1,6 @@
 mod commands;
 mod enums;
+mod logger;
 mod print;
 mod settings;
 
@@ -50,7 +51,16 @@ fn main() -> Result<(), io::Error> {
 
         let build = get_build(&path);
         for document in serde_yaml::Deserializer::from_str(build.as_str()) {
-            let v = Value::deserialize(document).unwrap();
+            let v_result = Value::deserialize(document);
+
+            let v = match v_result {
+                Ok(result) => result,
+                Err(error) => {
+                    println!("Handle error");
+                    pretty_print_info(error.to_string());
+                    panic!();
+                }
+            };
 
             let string = serde_yaml::to_string(&v).unwrap();
             let mut diff = get_diff();
@@ -67,7 +77,7 @@ fn main() -> Result<(), io::Error> {
             if string.len() > 0 {
                 pretty_print(string);
             } else {
-                logger(
+                logger::log(
                     args.log,
                     settings.configs.log,
                     format!(
@@ -82,17 +92,4 @@ fn main() -> Result<(), io::Error> {
     }
 
     Ok(())
-}
-
-fn logger(arg_log: Option<LogLevel>, config_log: LogLevel, message: String) {
-    match arg_log {
-        Some(LogLevel::Info) => pretty_print_info(message),
-        Some(LogLevel::Warning) => println!("warning"),
-        Some(LogLevel::Error) => println!("Error"),
-        None => match config_log {
-            LogLevel::Info => pretty_print_info(message),
-            LogLevel::Warning => println!("config: warning"),
-            LogLevel::Error => println!("config error"),
-        },
-    };
 }
