@@ -2,8 +2,8 @@ mod commands;
 mod enums;
 mod logger;
 mod print;
-mod settings;
 mod processor;
+mod settings;
 
 use crate::{enums::LogLevel, logger::Logger, processor::Process, settings::Settings};
 use clap::Parser;
@@ -30,7 +30,7 @@ fn main() -> Result<(), io::Error> {
     let targets = Process::get_entries(args, settings);
 
     for target in targets {
-        Process::process_target(&logger, &target);
+        Process::process_target(&logger, &target)?;
     }
 
     Ok(())
