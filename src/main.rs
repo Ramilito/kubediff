@@ -89,6 +89,7 @@ fn process_target(logger: &Logger, target: &str) {
         }
     }
 }
+
 fn handle_no_changes(logger: &Logger, v: &Value) {
     logger.log(format!(
         "No changes in: {:?} {:?} {:?}\n",
@@ -97,6 +98,7 @@ fn handle_no_changes(logger: &Logger, v: &Value) {
         v["metadata"]["name"].as_str().unwrap()
     ));
 }
+
 fn handle_deserialization_result(
     v_result: Result<Value, serde_yaml::Error>,
 ) -> Result<Value, String> {
