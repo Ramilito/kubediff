@@ -44,7 +44,7 @@ impl Pretty {
         PrettyPrinter::new()
             .header(false)
             .grid(true)
-            .line_numbers(true)
+            .line_numbers(false)
             .use_italics(true)
             .language("log")
             .theme("Monokai Extended Bright")

@@ -1,6 +1,5 @@
 use colored::Colorize;
 use regex::Regex;
-use serde_json::{json, ser::PrettyFormatter};
 
 use crate::{enums::LogLevel, print::Pretty};
 
