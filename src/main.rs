@@ -40,7 +40,7 @@ fn main() -> anyhow::Result<()> {
         } else {
             let message = "Must build at directory: not a valid directory ⚠️".yellow().to_string();
             logger.lock().unwrap().log_warning(format!(
-                "{}:{}",
+                "\n{}:{}\n",
                 message,
                 &target
             ))
