@@ -27,7 +27,7 @@ impl Logger {
         let level = self.arg_log.unwrap_or(self.config_log);
 
         if level == LogLevel::Warning || level == LogLevel::Info {
-            Pretty::print_info(message)
+            Pretty::print_warning(message)
         };
     }
 
