@@ -44,7 +44,7 @@ impl Pretty {
         PrettyPrinter::new()
             .input(Input::from_bytes(&string.as_bytes()))
             .header(false)
-            .grid(false)
+            .grid(true)
             .language("log")
             .theme("OneHalfDark")
             .print()
