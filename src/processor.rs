@@ -28,12 +28,12 @@ impl Process {
 
         let build = Commands::get_build(&logger, target)?;
 
-        for document in serde_yaml::Deserializer::from_str(build.as_str()) {
+        serde_yaml::Deserializer::from_str(build.as_str()).for_each(|document| {
             let v_result = Value::deserialize(document);
             match handle_deserialization_result(v_result) {
                 Ok(v) => {
                     let string = serde_yaml::to_string(&v).unwrap();
-                    let diff = Commands::get_diff(&string)?;
+                    let diff = Commands::get_diff(&string).unwrap();
 
                     if diff.len() > 0 {
                         Pretty::print(diff);
@@ -45,7 +45,7 @@ impl Process {
                     Pretty::print_info(error.to_string());
                 }
             }
-        }
+        });
         Ok(())
     }
 }
