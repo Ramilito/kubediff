@@ -24,6 +24,7 @@ pub struct Cli {
 
 fn main() -> Result<(), io::Error> {
     let args = Cli::parse();
+    
     let settings = Settings::load().expect("Failed to load config file!");
     let logger = Logger::new(args.log, settings.configs.log);
 
