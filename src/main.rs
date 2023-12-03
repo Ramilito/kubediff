@@ -7,7 +7,6 @@ mod settings;
 
 use crate::{enums::LogLevel, logger::Logger, processor::Process, settings::Settings};
 use clap::Parser;
-use std::io;
 
 #[derive(Debug, Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -22,9 +21,9 @@ pub struct Cli {
     log: Option<LogLevel>,
 }
 
-fn main() -> Result<(), io::Error> {
+fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
-    
+
     let settings = Settings::load().expect("Failed to load config file!");
     let logger = Logger::new(args.log, settings.configs.log);
 

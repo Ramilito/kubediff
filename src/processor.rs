@@ -1,11 +1,7 @@
 use serde::Deserialize;
 use serde_yaml::Value;
 
-use std::{
-    collections::HashSet,
-    env,
-    io::{self, Write},
-};
+use std::{collections::HashSet, env, io::Write};
 
 use crate::{commands::Commands, logger::Logger, print::Pretty, settings::Settings, Cli};
 pub struct Process {}
@@ -27,7 +23,7 @@ impl Process {
         return targets;
     }
 
-    pub fn process_target(logger: &Logger, target: &str) -> Result<(), io::Error> {
+    pub fn process_target(logger: &Logger, target: &str) -> anyhow::Result<()> {
         Pretty::print_path(format!("Path: {}", target.to_string()));
 
         let build = Commands::get_build(&logger, target)?;

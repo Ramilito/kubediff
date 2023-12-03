@@ -1,5 +1,5 @@
 use std::{
-    io,
+    io::{Error, ErrorKind},
     process::{Child, Command, Stdio},
 };
 
@@ -20,7 +20,7 @@ impl Commands {
             .unwrap()
     }
 
-    pub fn get_build(logger: &Logger, target: &str) -> Result<String, io::Error> {
+    pub fn get_build(logger: &Logger, target: &str) -> anyhow::Result<String> {
         let output = Command::new("kustomize")
             .arg("build")
             .arg(target)
@@ -30,13 +30,18 @@ impl Commands {
             .spawn()?
             .wait_with_output()?;
 
-        if output.status.success() {
-            return Ok(String::from_utf8(output.stdout).expect("Couldn't read stdout of command"));
-        } else {
-            logger.log_error(
-                String::from_utf8(output.stderr).expect("Couldn't read stderr of command"),
-            );
-            panic!("External command failed:")
+        match output.status.success() {
+            true => Ok(String::from_utf8(output.stdout).expect("Couldn't read stdout of command")),
+            false => {
+                logger.log_error(
+                    String::from_utf8(output.stderr).expect("Couldn't read stderr of command"),
+                );
+                Err(Error::new(
+                    ErrorKind::Other,
+                    "Kustomize build failed with above error 👆",
+                )
+                .into())
+            }
         }
     }
 }
