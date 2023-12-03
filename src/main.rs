@@ -5,6 +5,8 @@ mod print;
 mod processor;
 mod settings;
 
+use std::sync::{Arc, Mutex};
+
 use crate::{enums::LogLevel, logger::Logger, processor::Process, settings::Settings};
 use clap::Parser;
 
@@ -23,9 +25,8 @@ pub struct Cli {
 
 fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
-
     let settings = Settings::load().expect("Failed to load config file!");
-    let logger = Logger::new(args.log, settings.configs.log);
+    let logger = Arc::new(Mutex::new(Logger::new(args.log, settings.configs.log)));
 
     let targets = Process::get_entries(args, settings);
 
