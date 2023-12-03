@@ -1,3 +1,7 @@
+use colored::Colorize;
+use regex::Regex;
+use serde_json::{json, ser::PrettyFormatter};
+
 use crate::{enums::LogLevel, print::Pretty};
 
 pub struct Logger {
@@ -26,6 +30,17 @@ impl Logger {
     }
 
     pub fn log_error(&self, message: String) {
-        print!("{:?}", message);
+        let formatted = format_error_message(&message);
+        Pretty::print_error(formatted);
     }
+}
+
+fn format_error_message(error_message: &str) -> String {
+    // Find and colorize the word "Error"
+    let re_error_word = Regex::new(r"\bError\b").unwrap();
+    let colored_message = re_error_word.replace_all(&error_message, |_: &regex::Captures| {
+        "Error".red().to_string()
+    });
+
+    format!("{}\n", colored_message)
 }

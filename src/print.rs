@@ -1,24 +1,23 @@
 use bat::{Input, PagingMode, PrettyPrinter};
 
-#[allow(dead_code)]
-pub fn print_themes() {
-    let printer = PrettyPrinter::new();
-
-    println!("Syntaxes:");
-    for syntax in printer.syntaxes() {
-        println!("- {} ({})", syntax.name, syntax.file_extensions.join(", "));
-    }
-
-    println!();
-
-    println!("Themes:");
-    for theme in printer.themes() {
-        println!("- {}", theme);
-    }
-}
-
 pub struct Pretty {}
 impl Pretty {
+    #[allow(dead_code)]
+    pub fn print_themes() {
+        let printer = PrettyPrinter::new();
+
+        println!("Syntaxes:");
+        for syntax in printer.syntaxes() {
+            println!("- {} ({})", syntax.name, syntax.file_extensions.join(", "));
+        }
+
+        println!();
+
+        println!("Themes:");
+        for theme in printer.themes() {
+            println!("- {}", theme);
+        }
+    }
     pub fn print_path(string: String) {
         PrettyPrinter::new()
             .input(Input::from_bytes(&string.as_bytes()))
@@ -45,12 +44,10 @@ impl Pretty {
         PrettyPrinter::new()
             .header(false)
             .grid(true)
-            .line_numbers(false)
+            .line_numbers(true)
             .use_italics(true)
-            // .language("less")
-            .language("zsh")
+            .language("log")
             .theme("Monokai Extended Bright")
-            .wrapping_mode(WrappingMode::Character)
             .paging_mode(PagingMode::Never)
             .input(Input::from_bytes(&string.as_bytes()))
             .print()
