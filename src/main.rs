@@ -5,10 +5,14 @@ mod print;
 mod processor;
 mod settings;
 
-use std::sync::{Arc, Mutex};
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 use crate::{enums::LogLevel, logger::Logger, processor::Process, settings::Settings};
 use clap::Parser;
+use colored::Colorize;
 
 #[derive(Debug, Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -31,7 +35,16 @@ fn main() -> anyhow::Result<()> {
     let targets = Process::get_entries(args, settings);
 
     for target in targets {
-        Process::process_target(&logger, &target)?;
+        if Path::new(&target).exists() {
+            Process::process_target(&logger, &target)?;
+        } else {
+            let message = "Must build at directory: not a valid directory ⚠️".yellow().to_string();
+            logger.lock().unwrap().log_warning(format!(
+                "{}:{}",
+                message,
+                &target
+            ))
+        }
     }
 
     Ok(())
