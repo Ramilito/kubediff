@@ -41,6 +41,21 @@ impl Pretty {
             .unwrap();
     }
 
+    pub fn print_error(string: String) {
+        PrettyPrinter::new()
+            .header(false)
+            .grid(true)
+            .line_numbers(false)
+            .use_italics(true)
+            // .language("less")
+            .language("zsh")
+            .theme("Monokai Extended Bright")
+            .wrapping_mode(WrappingMode::Character)
+            .paging_mode(PagingMode::Never)
+            .input(Input::from_bytes(&string.as_bytes()))
+            .print()
+            .unwrap();
+    }
     pub fn print(string: String) {
         PrettyPrinter::new()
             .input(
