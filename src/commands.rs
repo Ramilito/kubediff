@@ -1,5 +1,5 @@
 use std::{
-    io::{Error, ErrorKind},
+    io::{Error, ErrorKind, Write},
     process::{Child, Command, Stdio},
 };
 
@@ -8,8 +8,8 @@ use crate::logger::Logger;
 pub struct Commands {}
 
 impl Commands {
-    pub fn get_diff() -> Child {
-        Command::new("kubectl")
+    pub fn get_diff(input: &String) -> anyhow::Result<String> {
+        let mut diff = Command::new("kubectl")
             .env("KUBECTL_EXTERNAL_DIFF", format!("{}", get_script()))
             .arg("diff")
             .arg("-f")
@@ -17,7 +17,13 @@ impl Commands {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
-            .unwrap()
+            .unwrap();
+        let stdin = diff.stdin.as_mut().unwrap().write_all(input.as_bytes());
+        drop(stdin);
+
+        let diff = diff.wait_with_output().unwrap();
+        let string = String::from_utf8(diff.stdout.to_owned()).unwrap();
+        Ok(string)
     }
 
     pub fn get_build(logger: &Logger, target: &str) -> anyhow::Result<String> {

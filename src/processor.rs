@@ -33,17 +33,10 @@ impl Process {
             match handle_deserialization_result(v_result) {
                 Ok(v) => {
                     let string = serde_yaml::to_string(&v).unwrap();
-                    let mut diff = Commands::get_diff();
-                    diff.stdin
-                        .as_mut()
-                        .unwrap()
-                        .write(string.as_bytes())
-                        .unwrap();
-                    let diff = diff.wait_with_output().unwrap();
-                    let string = String::from_utf8(diff.stdout.to_owned()).unwrap();
+                    let diff = Commands::get_diff(&string)?;
 
-                    if string.len() > 0 {
-                        Pretty::print(string);
+                    if diff.len() > 0 {
+                        Pretty::print(diff);
                     } else {
                         handle_no_changes(&logger, &v)
                     }
@@ -58,7 +51,7 @@ impl Process {
 }
 
 fn handle_no_changes(logger: &Logger, v: &Value) {
-    logger.log(format!(
+    logger.log_info(format!(
         "No changes in: {:?} {:?} {:?}\n",
         v["apiVersion"].as_str().unwrap(),
         v["kind"].as_str().unwrap(),
