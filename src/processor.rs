@@ -1,7 +1,12 @@
 use serde::Deserialize;
 use serde_yaml::Value;
 
-use std::{collections::HashSet, env, io::Write};
+use std::{
+    collections::HashSet,
+    env,
+    sync::{Arc, Mutex},
+    thread,
+};
 
 use crate::{commands::Commands, logger::Logger, print::Pretty, settings::Settings, Cli};
 pub struct Process {}
@@ -23,42 +28,44 @@ impl Process {
         return targets;
     }
 
-    pub fn process_target(logger: &Logger, target: &str) -> anyhow::Result<()> {
+    pub fn process_target(logger: &Arc<Mutex<Logger>>, target: &str) -> anyhow::Result<()> {
         Pretty::print_path(format!("Path: {}", target.to_string()));
+        let mut handles = vec![];
+        let build = Commands::get_build(logger.clone(), target)?;
 
-        let build = Commands::get_build(&logger, target)?;
-
-        for document in serde_yaml::Deserializer::from_str(build.as_str()) {
+        serde_yaml::Deserializer::from_str(build.as_str()).for_each(|document| {
             let v_result = Value::deserialize(document);
+            let logger_clone = Arc::clone(&logger);
+
             match handle_deserialization_result(v_result) {
                 Ok(v) => {
-                    let string = serde_yaml::to_string(&v).unwrap();
-                    let mut diff = Commands::get_diff();
-                    diff.stdin
-                        .as_mut()
-                        .unwrap()
-                        .write(string.as_bytes())
-                        .unwrap();
-                    let diff = diff.wait_with_output().unwrap();
-                    let string = String::from_utf8(diff.stdout.to_owned()).unwrap();
+                    let handle = thread::spawn(move || {
+                        let string = serde_yaml::to_string(&v).unwrap();
+                        let diff = Commands::get_diff(&string).unwrap();
 
-                    if string.len() > 0 {
-                        Pretty::print(string);
-                    } else {
-                        handle_no_changes(&logger, &v)
-                    }
+                        if diff.len() > 0 {
+                            Pretty::print(diff);
+                        } else {
+                            let logger = logger_clone.lock().unwrap();
+                            handle_no_changes(&logger, &v);
+                        }
+                    });
+                    handles.push(handle);
                 }
                 Err(error) => {
                     Pretty::print_info(error.to_string());
                 }
             }
+        });
+        for handle in handles {
+            handle.join().expect("Thread panicked");
         }
         Ok(())
     }
 }
 
 fn handle_no_changes(logger: &Logger, v: &Value) {
-    logger.log(format!(
+    logger.log_info(format!(
         "No changes in: {:?} {:?} {:?}\n",
         v["apiVersion"].as_str().unwrap(),
         v["kind"].as_str().unwrap(),

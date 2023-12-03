@@ -40,6 +40,17 @@ impl Pretty {
             .unwrap();
     }
 
+    pub fn print_warning(string: String) {
+        PrettyPrinter::new()
+            .input(Input::from_bytes(&string.as_bytes()))
+            .header(false)
+            .grid(true)
+            .language("log")
+            .theme("OneHalfDark")
+            .print()
+            .unwrap();
+    }
+
     pub fn print_error(string: String) {
         PrettyPrinter::new()
             .header(false)

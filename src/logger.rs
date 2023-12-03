@@ -15,16 +15,19 @@ impl Logger {
             config_log,
         }
     }
-    pub fn log(&self, message: String) {
-        match &self.arg_log {
-            Some(LogLevel::Info) => Pretty::print_info(message),
-            Some(LogLevel::Warning) => println!("warning"),
-            Some(LogLevel::Error) => println!("Error"),
-            None => match &self.config_log {
-                LogLevel::Info => Pretty::print_info(message),
-                LogLevel::Warning => println!("config: warning"),
-                LogLevel::Error => println!("config error"),
-            },
+
+    pub fn log_info(&self, message: String) {
+        let level = self.arg_log.unwrap_or(self.config_log);
+        if level == LogLevel::Info {
+            Pretty::print_info(message)
+        };
+    }
+
+    pub fn log_warning(&self, message: String) {
+        let level = self.arg_log.unwrap_or(self.config_log);
+
+        if level == LogLevel::Warning || level == LogLevel::Info {
+            Pretty::print_warning(message)
         };
     }
 

@@ -5,8 +5,14 @@ mod print;
 mod processor;
 mod settings;
 
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
+
 use crate::{enums::LogLevel, logger::Logger, processor::Process, settings::Settings};
 use clap::Parser;
+use colored::Colorize;
 
 #[derive(Debug, Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -23,14 +29,22 @@ pub struct Cli {
 
 fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
-
     let settings = Settings::load().expect("Failed to load config file!");
-    let logger = Logger::new(args.log, settings.configs.log);
+    let logger = Arc::new(Mutex::new(Logger::new(args.log, settings.configs.log)));
 
     let targets = Process::get_entries(args, settings);
 
     for target in targets {
-        Process::process_target(&logger, &target)?;
+        if Path::new(&target).exists() {
+            Process::process_target(&logger, &target)?;
+        } else {
+            let message = "Must build at directory: not a valid directory ⚠️".yellow().to_string();
+            logger.lock().unwrap().log_warning(format!(
+                "\n{}:{}\n",
+                message,
+                &target
+            ))
+        }
     }
 
     Ok(())
