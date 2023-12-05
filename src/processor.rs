@@ -1,6 +1,5 @@
 use rayon::prelude::*;
-use serde::Deserialize;
-use serde_yaml::Value;
+use yaml_rust::{Yaml, YamlEmitter, YamlLoader};
 
 use std::{
     collections::HashSet,
@@ -32,50 +31,37 @@ impl Process {
         Pretty::print_path(format!("Path: {}", target.to_string()));
         let build = Commands::get_build(logger.clone(), target)?;
 
-        let handles: Vec<_> = serde_yaml::Deserializer::from_str(build.as_str())
-            .filter_map(|document| {
-                let v_result = Value::deserialize(document);
-
-                match handle_deserialization_result(v_result) {
-                    Ok(v) => Some(v),
-                    Err(error) => {
-                        Pretty::print_info(error.to_string());
-                        None
-                    }
-                }
-            })
+        let handles: Vec<_> = YamlLoader::load_from_str(build.as_str())?
+            .into_iter()
+            .filter_map(|yaml| Some(yaml.clone()))
             .collect();
 
         handles.par_iter().for_each(|v| {
             let logger_clone = Arc::clone(&logger);
-            let string = serde_yaml::to_string(&v).unwrap();
+            let mut string = String::new();
+            {
+                let mut emitter = YamlEmitter::new(&mut string);
+                emitter.dump(v).unwrap();
+            }
             let diff = Commands::get_diff(&string).unwrap();
 
-            if diff.len() > 0 {
+            if !diff.is_empty() {
                 Pretty::print(diff);
             } else {
                 let logger = logger_clone.lock().unwrap();
                 handle_no_changes(&logger, &v);
             }
         });
+
         Ok(())
     }
 }
 
-fn handle_no_changes(logger: &Logger, v: &Value) {
+fn handle_no_changes(logger: &Logger, v: &Yaml) {
     logger.log_info(format!(
         "No changes in: {:?} {:?} {:?}\n",
         v["apiVersion"].as_str().unwrap(),
         v["kind"].as_str().unwrap(),
         v["metadata"]["name"].as_str().unwrap()
     ));
-}
-
-fn handle_deserialization_result(
-    v_result: Result<Value, serde_yaml::Error>,
-) -> Result<Value, String> {
-    match v_result {
-        Ok(result) => Ok(result),
-        Err(error) => Err(error.to_string()),
-    }
 }
