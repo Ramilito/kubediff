@@ -28,8 +28,8 @@ impl Commands {
     }
 
     pub fn get_build(logger: Arc<Mutex<Logger>>, target: &str) -> anyhow::Result<String> {
-        let output = Command::new("kustomize")
-            .arg("build")
+        let output = Command::new("kubectl")
+            .arg("kustomize")
             .arg(target)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
