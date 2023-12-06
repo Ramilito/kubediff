@@ -1,7 +1,6 @@
 use clap::ArgEnum;
-use serde::{Deserialize, Serialize};
 
-#[derive(Default, Debug, Copy, Clone, PartialEq, ArgEnum, Serialize, Deserialize)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, ArgEnum)]
 pub enum LogLevel {
     Info,
     Warning,

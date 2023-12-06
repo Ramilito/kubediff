@@ -1,21 +1,17 @@
 use glob::glob;
-use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::io::{BufReader, Error};
+use std::io::{BufReader, Error, Read};
 use std::path::Path;
 use std::{fs::File, io};
+use yaml_rust::{Yaml, YamlLoader};
 
 use crate::enums::LogLevel;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct Configs {
-    #[serde(default)]
     pub include: Vec<String>,
-    #[serde(default)]
     pub exclude: Vec<String>,
-    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub env: String,
-    #[serde(default)]
     pub log: LogLevel,
 }
 
@@ -27,7 +23,7 @@ pub fn expanduser(path: &str) -> String {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct Settings {
     pub configs: Configs,
 }
@@ -43,9 +39,16 @@ impl Settings {
     pub fn load() -> Result<Settings, io::Error> {
         let settings_path_str = Self::path();
         let settings_path = Path::new(&settings_path_str);
-        let file = File::open(settings_path)?;
-        let reader = BufReader::new(file);
-        let settings: Settings = serde_yaml::from_reader(reader).unwrap();
+        let mut file = File::open(settings_path)?;
+
+        // let reader = BufReader::new(file);
+        let mut yaml_str = String::new();
+        _ = file.read_to_string(&mut yaml_str);
+
+        let yaml_docs = YamlLoader::load_from_str(&yaml_str).unwrap();
+        let settings = Settings {
+            configs: Settings::deserialize_configs(&yaml_docs[0]),
+        };
 
         Ok(settings)
     }
@@ -81,5 +84,32 @@ impl Settings {
         }
 
         Ok(paths)
+    }
+    fn deserialize_configs(yaml: &Yaml) -> Configs {
+        let include = yaml["configs"]["include"].as_vec().map_or_else(
+            || Vec::new(),
+            |v| v.iter().map(|y| y.as_str().unwrap().to_owned()).collect(),
+        );
+
+        let exclude = yaml["configs"]["exclude"].as_vec().map_or_else(
+            || Vec::new(),
+            |v| v.iter().map(|y| y.as_str().unwrap().to_owned()).collect(),
+        );
+
+        let env = yaml["configs"]["env"].as_str().unwrap_or_default().to_owned();
+
+        let test = yaml["configs"]["log"].as_str().unwrap_or_default().to_owned();
+        println!("{:?}", include);
+        // let log = yaml["log"] as LogLevel;
+            // .as_i64()
+            // .map_or(LogLevel::default(), |l| l );
+        let log = LogLevel::Info;
+
+        Configs {
+            include,
+            exclude,
+            env,
+            log,
+        }
     }
 }
