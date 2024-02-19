@@ -1,6 +1,6 @@
 use std::{
     io::{Error, ErrorKind, Write},
-    process::{Child, Command, Stdio},
+    process::{Command, Stdio},
     sync::{Arc, Mutex},
 };
 
