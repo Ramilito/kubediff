@@ -28,8 +28,12 @@ impl Process {
         return targets;
     }
 
-    pub fn process_target(logger: &Arc<Mutex<Logger>>, target: &str) -> anyhow::Result<()> {
-        Pretty::print_path(format!("Path: {}", target.to_string()));
+    pub fn process_target(
+        args: Cli,
+        logger: &Arc<Mutex<Logger>>,
+        target: &str,
+    ) -> anyhow::Result<()> {
+        Pretty::print_path(format!("Path: {}", target.to_string()), args.term_width);
         let build = Commands::get_build(logger.clone(), target)?;
 
         let handles: Vec<_> = serde_yaml::Deserializer::from_str(build.as_str())
@@ -39,7 +43,7 @@ impl Process {
                 match handle_deserialization_result(v_result) {
                     Ok(v) => Some(v),
                     Err(error) => {
-                        Pretty::print_info(error.to_string());
+                        Pretty::print_info(error.to_string(), args.term_width);
                         None
                     }
                 }
@@ -50,9 +54,9 @@ impl Process {
             let logger_clone = Arc::clone(&logger);
             let string = serde_yaml::to_string(&v).unwrap();
             let diff = Commands::get_diff(&string).unwrap();
-
             if diff.len() > 0 {
-                Pretty::print(diff);
+                let filename = &v["metadata"]["name"];
+                Pretty::print(diff, filename.as_str(), args.term_width);
             } else {
                 let logger = logger_clone.lock().unwrap();
                 handle_no_changes(&logger, &v);
