@@ -100,7 +100,7 @@ kubediff -e dev
 
 **_You can also bypass the config by passing either -path or -inplace argument:_**
 ```
-kubediff -p ~/path-to-kustomize-dir
+kubediff -p ~/path-to-dir-or-file
 kubediff -i 
 ```
 ## Roadmap
