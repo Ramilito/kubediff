@@ -1,17 +1,19 @@
 use colored::Colorize;
 use regex::Regex;
 
-use crate::{enums::LogLevel, print::Pretty};
+use crate::{enums::LogLevel, print::Pretty, Cli};
 
 pub struct Logger {
     arg_log: Option<LogLevel>,
+    term_width: Option<usize>,
     config_log: LogLevel,
 }
 
 impl Logger {
-    pub fn new(arg_log: Option<LogLevel>, config_log: LogLevel) -> Self {
+    pub fn new(args: Cli, config_log: LogLevel) -> Self {
         Logger {
-            arg_log,
+            arg_log: args.log,
+            term_width: args.term_width,
             config_log,
         }
     }
@@ -19,7 +21,7 @@ impl Logger {
     pub fn log_info(&self, message: String) {
         let level = self.arg_log.unwrap_or(self.config_log);
         if level == LogLevel::Info {
-            Pretty::print_info(message)
+            Pretty::print_info(message, self.term_width)
         };
     }
 
@@ -27,13 +29,13 @@ impl Logger {
         let level = self.arg_log.unwrap_or(self.config_log);
 
         if level == LogLevel::Warning || level == LogLevel::Info {
-            Pretty::print_warning(message)
+            Pretty::print_warning(message, self.term_width)
         };
     }
 
     pub fn log_error(&self, message: String) {
         let formatted = format_error_message(&message);
-        Pretty::print_error(formatted);
+        Pretty::print_error(formatted,self.term_width);
     }
 }
 

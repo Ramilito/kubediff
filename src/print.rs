@@ -18,41 +18,53 @@ impl Pretty {
             println!("- {}", theme);
         }
     }
-    pub fn print_path(string: String) {
-        PrettyPrinter::new()
+    pub fn print_path(string: String, term_width: Option<usize>) {
+        let mut printer = PrettyPrinter::new();
+        printer
             .input(Input::from_bytes(&string.as_bytes()))
             .header(true)
             .grid(true)
             .language("syslog")
-            .theme("OneHalfDark")
-            .print()
-            .unwrap();
+            .theme("OneHalfDark");
+        if term_width.is_some() {
+            printer.term_width(term_width.unwrap());
+        }
+        printer.print().unwrap();
     }
 
-    pub fn print_info(string: String) {
-        PrettyPrinter::new()
+    pub fn print_info(string: String, term_width: Option<usize>) {
+        let mut printer = PrettyPrinter::new();
+        printer
             .input(Input::from_bytes(&string.as_bytes()))
             .header(false)
             .grid(false)
             .language("yaml")
-            .theme("OneHalfDark")
-            .print()
-            .unwrap();
+            .theme("OneHalfDark");
+
+        if term_width.is_some() {
+            printer.term_width(term_width.unwrap());
+        }
+        printer.print().unwrap();
     }
 
-    pub fn print_warning(string: String) {
-        PrettyPrinter::new()
+    pub fn print_warning(string: String, term_width: Option<usize>) {
+        let mut printer = PrettyPrinter::new();
+        printer
             .input(Input::from_bytes(&string.as_bytes()))
             .header(false)
             .grid(true)
             .language("log")
-            .theme("OneHalfDark")
-            .print()
-            .unwrap();
+            .theme("OneHalfDark");
+
+        if term_width.is_some() {
+            printer.term_width(term_width.unwrap());
+        }
+        printer.print().unwrap();
     }
 
-    pub fn print_error(string: String) {
-        PrettyPrinter::new()
+    pub fn print_error(string: String, term_width: Option<usize>) {
+        let mut printer = PrettyPrinter::new();
+        printer
             .header(false)
             .grid(true)
             .line_numbers(false)
@@ -60,13 +72,16 @@ impl Pretty {
             .language("log")
             .theme("Monokai Extended Bright")
             .paging_mode(PagingMode::Never)
-            .input(Input::from_bytes(&string.as_bytes()))
-            .print()
-            .unwrap();
+            .input(Input::from_bytes(&string.as_bytes()));
+
+        if term_width.is_some() {
+            printer.term_width(term_width.unwrap());
+        }
+        printer.print().unwrap();
     }
-    pub fn print(string: String, filename: Option<&str>) {
-        
-        PrettyPrinter::new()
+    pub fn print(string: String, filename: Option<&str>, term_width: Option<usize>) {
+        let mut printer = PrettyPrinter::new();
+        printer
             .input(
                 Input::from_bytes(&string.as_bytes())
                     .name(filename.unwrap_or("Diff.yaml"))
@@ -78,8 +93,11 @@ impl Pretty {
             .use_italics(true)
             .language("diff")
             .theme("gruvbox-dark")
-            .paging_mode(PagingMode::Never)
-            .print()
-            .unwrap();
+            .paging_mode(PagingMode::Never);
+
+        if term_width.is_some() {
+            printer.term_width(term_width.unwrap());
+        }
+        printer.print().unwrap();
     }
 }
