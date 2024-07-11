@@ -23,7 +23,7 @@ pub struct Cli {
     inplace: bool,
     #[clap(short, long, value_parser)]
     path: Option<String>,
-    #[clap(short, long, arg_enum)]
+    #[clap(short, long, value_enum)]
     log: Option<LogLevel>,
     #[clap(short, long, value_parser)]
     term_width: Option<usize>,

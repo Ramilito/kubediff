@@ -7,7 +7,7 @@ authors = ["https://github.com/ramilito"]
 [dependencies]
 anyhow = "1.0.75"
 bat = "0.24.0"
-clap = { version = "3.2.16", features = ["derive"] }
+clap = { version = "4.5.9", features = ["derive"] }
 colored = "2.0.4"
 config = "0.13.2"
 dirs = "4.0.0"
