@@ -70,7 +70,7 @@ impl Pretty {
             .input(
                 Input::from_bytes(&string.as_bytes())
                     .name(filename.unwrap_or("Diff.yaml"))
-                    .kind("File"),
+                    .kind("Name"),
             )
             .header(true)
             .grid(true)
