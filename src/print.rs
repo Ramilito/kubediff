@@ -64,11 +64,12 @@ impl Pretty {
             .print()
             .unwrap();
     }
-    pub fn print(string: String) {
+    pub fn print(string: String, filename: Option<&str>) {
+        
         PrettyPrinter::new()
             .input(
                 Input::from_bytes(&string.as_bytes())
-                    .name("diff.yaml")
+                    .name(filename.unwrap_or("Diff.yaml"))
                     .kind("File"),
             )
             .header(true)
