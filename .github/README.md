@@ -59,7 +59,7 @@ We will loop over the projects files and run kubectl build, then pipe the output
 ### Installation
 Download and extract the binary.
 ```
-KUBEDIFF_VERSION=0.1.1 && \
+KUBEDIFF_VERSION=0.1.4 && \
 KUBEDIFF_OS=x86_64-unknown-linux-gnu && \
 wget "https://github.com/Ramilito/kubediff/releases/download/${KUBEDIFF_VERSION}/kubediff_${KUBEDIFF_VERSION}_${KUBEDIFF_OS}.tar.gz" && \
 mkdir -p $HOME/.kube/kubediff && tar zxpf kubediff_${KUBEDIFF_VERSION}_${KUBEDIFF_OS}.tar.gz -C $HOME/.kube/kubediff
