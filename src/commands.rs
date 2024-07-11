@@ -1,6 +1,8 @@
 use std::{
+    fs,
     io::{Error, ErrorKind, Write},
-    process::{Command, Stdio},
+    path::Path,
+    process::{Command, Output, Stdio},
     sync::{Arc, Mutex},
 };
 
@@ -28,14 +30,67 @@ impl Commands {
     }
 
     pub fn get_build(logger: Arc<Mutex<Logger>>, target: &str) -> anyhow::Result<String> {
-        let output = Command::new("kubectl")
-            .arg("kustomize")
-            .arg(target)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()?
-            .wait_with_output()?;
+        let mut args = vec![];
+        let output: Output;
+        if Path::new(&target).is_file() {
+            args.push(target);
+            output = Command::new("cat")
+                .args(args)
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()?
+                .wait_with_output()?;
+        } else {
+            let file_exists = fs::read_dir(target)?.filter_map(Result::ok).any(|entry| {
+                entry.path().is_file()
+                    && (entry.file_name() == "kustomization.yaml"
+                        || entry.file_name() == "kustomization.yml"
+                        || entry.file_name() == "Kustomization")
+            });
+            if file_exists {
+                args.push("kustomize");
+                args.push(target);
+                output = Command::new("kubectl")
+                    .args(args)
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()?
+                    .wait_with_output()?;
+            } else {
+                let mut combined_output = String::new();
+                for entry in fs::read_dir(target)? {
+                    let entry = entry?;
+                    let path = entry.path();
+                    if path.is_file() {
+                        let file_args = vec![path.to_str().unwrap()];
+                        let file_output = Command::new("cat")
+                            .args(&file_args)
+                            .stdin(Stdio::piped())
+                            .stdout(Stdio::piped())
+                            .stderr(Stdio::piped())
+                            .spawn()?
+                            .wait_with_output()?;
+
+                        if !file_output.status.success() {
+                            logger.lock().unwrap().log_error(
+                                String::from_utf8(file_output.stderr)
+                                    .expect("Couldn't read stderr of command"),
+                            );
+                            return Err(Error::new(
+                                ErrorKind::Other,
+                                "Build failed with above error 👆",
+                            )
+                            .into());
+                        }
+
+                        combined_output.push_str(&String::from_utf8(file_output.stdout)?);
+                    }
+                }
+                return Ok(combined_output);
+            }
+        }
 
         match output.status.success() {
             true => Ok(String::from_utf8(output.stdout).expect("Couldn't read stdout of command")),
@@ -43,11 +98,7 @@ impl Commands {
                 logger.lock().unwrap().log_error(
                     String::from_utf8(output.stderr).expect("Couldn't read stderr of command"),
                 );
-                Err(Error::new(
-                    ErrorKind::Other,
-                    "Kustomize build failed with above error 👆",
-                )
-                .into())
+                Err(Error::new(ErrorKind::Other, "Build failed with above error 👆").into())
             }
         }
     }
