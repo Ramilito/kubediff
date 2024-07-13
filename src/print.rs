@@ -22,7 +22,7 @@ impl Pretty {
         let mut printer = PrettyPrinter::new();
         printer
             .input(Input::from_bytes(&string.as_bytes()))
-            .header(true)
+            .header(false)
             .grid(true)
             .language("syslog")
             .theme("OneHalfDark");
