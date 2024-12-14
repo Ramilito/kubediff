@@ -17,7 +17,6 @@ find "$@" -type f -exec yq e -i 'del(
   .metadata.generation,
   .metadata.creationTimestamp,
   .webhooks,
-  .data,
   .spec.caBundle,
   .metadata.annotations["kubectl.kubernetes.io/last-applied-configuration"],
   .metadata.annotations["argocd.argoproj.io/tracking-id"]
