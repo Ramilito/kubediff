@@ -1,18 +1,37 @@
-mod commands;
-mod enums;
+// Binary-only modules (not exported from library)
 mod logger;
 mod print;
-mod processor;
-mod settings;
 
 use std::{
     path::Path,
     sync::{Arc, Mutex},
 };
 
-use crate::{enums::LogLevel, logger::Logger, processor::Process, settings::Settings};
-use clap::Parser;
+// Import from the library crate
+use kubediff::{LogLevel, Process, Settings};
+
+use crate::{logger::Logger, print::Pretty};
+use clap::{Parser, ValueEnum};
 use colored::Colorize;
+
+/// CLI-specific LogLevel that implements clap's ValueEnum
+#[derive(Default, Debug, Copy, Clone, PartialEq, ValueEnum)]
+pub enum CliLogLevel {
+    Info,
+    Warning,
+    #[default]
+    Error,
+}
+
+impl From<CliLogLevel> for LogLevel {
+    fn from(cli: CliLogLevel) -> Self {
+        match cli {
+            CliLogLevel::Info => LogLevel::Info,
+            CliLogLevel::Warning => LogLevel::Warning,
+            CliLogLevel::Error => LogLevel::Error,
+        }
+    }
+}
 
 #[derive(Debug, Parser, Clone)]
 #[clap(author, version, about, long_about = None)]
@@ -24,23 +43,64 @@ pub struct Cli {
     #[clap(short, long, value_parser)]
     path: Option<String>,
     #[clap(short, long, value_enum)]
-    log: Option<LogLevel>,
+    log: Option<CliLogLevel>,
     #[clap(short, long, value_parser)]
     term_width: Option<usize>,
 }
 
 fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
-    let settings = Settings::load().expect("Failed to load config file!");
-    let logger = Arc::new(Mutex::new(Logger::new(args.clone(), settings.configs.log)));
+    let mut settings = Settings::load().expect("Failed to load config file!");
 
-    let targets = Process::get_entries(args.clone(), settings);
+    // Determine the effective log level
+    let log_level = args
+        .log
+        .map(LogLevel::from)
+        .unwrap_or(settings.configs.log);
+
+    // Create logger with resolved log level
+    let logger = Arc::new(Mutex::new(Logger::new(log_level, args.term_width)));
+
+    // Get target paths using library function
+    let targets = Process::get_entries(
+        args.env.clone(),
+        args.inplace,
+        args.path.clone(),
+        &mut settings,
+    );
 
     for target in targets {
         if Path::new(&target).exists() {
-            Process::process_target(args.clone(), &logger, &target)?;
+            // Print the path header (CLI-only display)
+            Pretty::print_path(format!("Path: {}", target), args.term_width);
+
+            // Use library to get structured results
+            let result = Process::process_target(&target);
+
+            // Handle build errors
+            if let Some(error) = result.build_error {
+                logger.lock().unwrap().log_error(error);
+                continue;
+            }
+
+            // Process and display each diff result
+            for diff_result in result.results {
+                if let Some(ref diff) = diff_result.diff {
+                    // Has changes - print the diff
+                    Pretty::print(diff.clone(), Some(&diff_result.resource_name), args.term_width);
+                } else if let Some(ref error) = diff_result.error {
+                    // Error occurred
+                    logger.lock().unwrap().log_error(error.clone());
+                } else {
+                    // No changes
+                    logger.lock().unwrap().log_info(format!(
+                        "No changes in: {:?} {:?} {:?}\n",
+                        diff_result.api_version, diff_result.kind, diff_result.resource_name
+                    ));
+                }
+            }
         } else {
-            let message = "Must build at directory: not a valid directory ⚠️"
+            let message = "Must build at directory: not a valid directory"
                 .yellow()
                 .to_string();
             logger

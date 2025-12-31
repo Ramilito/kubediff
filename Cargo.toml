@@ -1,8 +1,16 @@
 [package]
 name = "kubediff"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["https://github.com/ramilito"]
+
+[lib]
+name = "kubediff"
+path = "src/lib.rs"
+
+[[bin]]
+name = "kubediff"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.75"

@@ -2,84 +2,149 @@ use rayon::prelude::*;
 use serde::Deserialize;
 use serde_yaml::Value;
 
-use std::{
-    collections::HashSet,
-    env,
-    sync::{Arc, Mutex},
-};
+use std::{collections::HashSet, env};
 
-use crate::{commands::Commands, logger::Logger, print::Pretty, settings::Settings, Cli};
-pub struct Process {}
+use crate::{commands::Commands, settings::Settings};
+
+/// Result of diffing a single Kubernetes resource
+#[derive(Debug, Clone)]
+pub struct DiffResult {
+    /// The target path that was processed
+    pub target: String,
+    /// The Kubernetes resource name (from metadata.name)
+    pub resource_name: String,
+    /// The API version of the resource
+    pub api_version: String,
+    /// The kind of the resource (Deployment, Service, etc.)
+    pub kind: String,
+    /// The diff output if changes exist, None if no changes
+    pub diff: Option<String>,
+    /// Error message if processing failed for this resource
+    pub error: Option<String>,
+}
+
+/// Result of processing a single target path
+#[derive(Debug, Clone)]
+pub struct TargetResult {
+    /// The target path that was processed
+    pub target: String,
+    /// Results for each resource in the target
+    pub results: Vec<DiffResult>,
+    /// Build errors that occurred before diffing (e.g., kustomize failures)
+    pub build_error: Option<String>,
+}
+
+pub struct Process;
 
 impl Process {
-    pub fn get_entries(args: Cli, mut settings: Settings) -> HashSet<String> {
+    /// Get target paths to process based on options and settings
+    pub fn get_entries(
+        env: Option<String>,
+        inplace: bool,
+        path: Option<String>,
+        settings: &mut Settings,
+    ) -> HashSet<String> {
         let mut targets = HashSet::new();
 
-        if args.inplace {
+        if inplace {
             let cwd = env::current_dir().unwrap().to_str().unwrap().to_string();
             targets.insert(cwd);
-        } else if args.path.is_some() {
-            let path = args.path.unwrap();
-            targets.insert(path);
+        } else if let Some(p) = path {
+            targets.insert(p);
         } else {
-            settings.configs.env = args.env.unwrap_or_default();
-            targets = Settings::get_service_paths(&settings).expect("");
+            settings.configs.env = env.unwrap_or_default();
+            targets = Settings::get_service_paths(settings).expect("");
         }
-        return targets;
+        targets
     }
 
-    pub fn process_target(
-        args: Cli,
-        logger: &Arc<Mutex<Logger>>,
-        target: &str,
-    ) -> anyhow::Result<()> {
-        Pretty::print_path(format!("Path: {}", target.to_string()), args.term_width);
-        let build = Commands::get_build(logger.clone(), target)?;
+    /// Process a single target and return structured results
+    pub fn process_target(target: &str) -> TargetResult {
+        // Try to get the build output
+        let build = match Commands::get_build(target) {
+            Ok(b) => b,
+            Err(e) => {
+                return TargetResult {
+                    target: target.to_string(),
+                    results: vec![],
+                    build_error: Some(e.to_string()),
+                };
+            }
+        };
 
-        let handles: Vec<_> = serde_yaml::Deserializer::from_str(build.as_str())
+        // Parse YAML documents, collecting any deserialization errors
+        let mut deserialization_errors: Vec<DiffResult> = vec![];
+        let documents: Vec<Value> = serde_yaml::Deserializer::from_str(build.as_str())
             .filter_map(|document| {
                 let v_result = Value::deserialize(document);
-
-                match handle_deserialization_result(v_result) {
+                match v_result {
                     Ok(v) => Some(v),
                     Err(error) => {
-                        Pretty::print_info(error.to_string(), args.term_width);
+                        deserialization_errors.push(DiffResult {
+                            target: target.to_string(),
+                            resource_name: "unknown".to_string(),
+                            api_version: "unknown".to_string(),
+                            kind: "unknown".to_string(),
+                            diff: None,
+                            error: Some(error.to_string()),
+                        });
                         None
                     }
                 }
             })
             .collect();
 
-        handles.par_iter().for_each(|v| {
-            let logger_clone = Arc::clone(&logger);
-            let string = serde_yaml::to_string(&v).unwrap();
-            let diff = Commands::get_diff(&string).unwrap();
-            if diff.len() > 0 {
-                let filename = &v["metadata"]["name"];
-                Pretty::print(diff, filename.as_str(), args.term_width);
-            } else {
-                let logger = logger_clone.lock().unwrap();
-                handle_no_changes(&logger, &v);
-            }
-        });
-        Ok(())
+        // Process documents in parallel, collecting results
+        let mut results: Vec<DiffResult> = documents
+            .par_iter()
+            .map(|v| {
+                let string = serde_yaml::to_string(&v).unwrap();
+                let resource_name = v["metadata"]["name"]
+                    .as_str()
+                    .unwrap_or("unknown")
+                    .to_string();
+                let api_version = v["apiVersion"].as_str().unwrap_or("unknown").to_string();
+                let kind = v["kind"].as_str().unwrap_or("unknown").to_string();
+
+                match Commands::get_diff(&string) {
+                    Ok(diff) => {
+                        let diff_option = if diff.is_empty() { None } else { Some(diff) };
+                        DiffResult {
+                            target: target.to_string(),
+                            resource_name,
+                            api_version,
+                            kind,
+                            diff: diff_option,
+                            error: None,
+                        }
+                    }
+                    Err(e) => DiffResult {
+                        target: target.to_string(),
+                        resource_name,
+                        api_version,
+                        kind,
+                        diff: None,
+                        error: Some(e.to_string()),
+                    },
+                }
+            })
+            .collect();
+
+        // Add any deserialization errors to the results
+        results.extend(deserialization_errors);
+
+        TargetResult {
+            target: target.to_string(),
+            results,
+            build_error: None,
+        }
     }
-}
 
-fn handle_no_changes(logger: &Logger, v: &Value) {
-    logger.log_info(format!(
-        "No changes in: {:?} {:?} {:?}\n",
-        v["apiVersion"].as_str().unwrap(),
-        v["kind"].as_str().unwrap(),
-        v["metadata"]["name"].as_str().unwrap()
-    ));
-}
-
-fn handle_deserialization_result(
-    v_result: Result<Value, serde_yaml::Error>,
-) -> Result<Value, String> {
-    match v_result {
-        Ok(result) => Ok(result),
-        Err(error) => Err(error.to_string()),
+    /// Process multiple targets and return all results
+    pub fn process_targets(targets: HashSet<String>) -> Vec<TargetResult> {
+        targets
+            .into_iter()
+            .map(|target| Self::process_target(&target))
+            .collect()
     }
 }
