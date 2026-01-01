@@ -11,7 +11,14 @@ pub struct Commands;
 
 impl Commands {
     pub fn get_diff(input: &str) -> anyhow::Result<String> {
-        let mut diff = Command::new("kubectl")
+        let mut cmd = Command::new("kubectl");
+
+        // Use diff.sh if it exists, otherwise use default kubectl diff
+        if let Some(script_path) = get_script() {
+            cmd.env("KUBECTL_EXTERNAL_DIFF", script_path);
+        }
+
+        let mut diff = cmd
             .arg("diff")
             .arg("-f")
             .arg("-")
@@ -62,6 +69,17 @@ impl Commands {
         }
 
         Ok(combined_output)
+    }
+}
+
+fn get_script() -> Option<String> {
+    let mut path = std::env::current_exe().ok()?;
+    path.pop();
+    path.push("diff.sh");
+    if path.exists() {
+        Some(path.to_str()?.to_string())
+    } else {
+        None
     }
 }
 
