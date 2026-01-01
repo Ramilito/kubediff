@@ -1,9 +1,11 @@
 use std::{
     fs,
-    io::{Error, ErrorKind, Write},
+    io::Write,
     path::Path,
     process::{Command, Stdio},
 };
+
+use crate::kustomize;
 
 pub struct Commands;
 
@@ -34,22 +36,35 @@ impl Commands {
     }
 
     pub fn get_build(target: &str) -> anyhow::Result<String> {
-        if Path::new(target).is_file() {
-            return run_command(&["cat", target]);
+        let path = Path::new(target);
+
+        // Single file - just read it
+        if path.is_file() {
+            return Ok(fs::read_to_string(path)?);
         }
 
+        // Kustomize directory - use embedded kustomize
         if is_kustomize_directory(target)? {
-            return run_command(&["kubectl", "kustomize", target]);
+            return kustomize::build(target);
         }
 
+        // Regular directory - concatenate all YAML files
         let mut combined_output = String::new();
         for entry in fs::read_dir(target)? {
             let entry = entry?;
-            if entry.path().is_file() {
-                let e = entry.path();
-                let file_path = e.to_str().unwrap();
-                let output = run_command(&["cat", file_path])?;
-                combined_output.push_str(&output);
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(ext) = path.extension() {
+                    if ext == "yaml" || ext == "yml" {
+                        let content = fs::read_to_string(&path)?;
+                        combined_output.push_str(&content);
+                        // Ensure documents are separated
+                        if !combined_output.ends_with('\n') {
+                            combined_output.push('\n');
+                        }
+                        combined_output.push_str("---\n");
+                    }
+                }
             }
         }
 
@@ -65,27 +80,6 @@ fn get_script() -> Option<String> {
         Some(path.to_str()?.to_string())
     } else {
         None
-    }
-}
-
-fn run_command(args: &[&str]) -> anyhow::Result<String> {
-    let output = Command::new(args[0])
-        .args(&args[1..])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?
-        .wait_with_output()?;
-
-    if output.status.success() {
-        Ok(String::from_utf8(output.stdout)?)
-    } else {
-        let stderr = String::from_utf8(output.stderr)?;
-        Err(Error::new(
-            ErrorKind::Other,
-            format!("Build failed with error: {}", stderr),
-        )
-        .into())
     }
 }
 

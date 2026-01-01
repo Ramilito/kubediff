@@ -1,0 +1,87 @@
+name: Release-build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Linux
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          # macOS
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          # Windows
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: get-latest-tag
+        shell: bash
+        run: |
+          echo "LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo 'v0.0.0')" >> $GITHUB_ENV
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build (native)
+        if: ${{ !matrix.cross }}
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build (cross)
+        if: matrix.cross
+        run: cross build --release --target ${{ matrix.target }}
+
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          cp ../../../src/assets/diff.sh .
+          tar -czvf kubediff_${{ matrix.target }}.tar.gz kubediff diff.sh
+          mv kubediff_${{ matrix.target }}.tar.gz ../../../
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          cp ../../../src/assets/diff.sh .
+          7z a kubediff_${{ matrix.target }}.zip kubediff.exe diff.sh
+          mv kubediff_${{ matrix.target }}.zip ../../../
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kubediff_${{ matrix.target }}
+          path: kubediff_${{ matrix.target }}.*
+
+      - uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'release'
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: kubediff_${{ matrix.target }}.*
+          file_glob: true
+          asset_name: kubediff_${{ env.LATEST_TAG }}_${{ matrix.target }}
+          tag: ${{ env.LATEST_TAG }}

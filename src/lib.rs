@@ -50,6 +50,7 @@
 
 pub mod commands;
 pub mod enums;
+pub mod kustomize;
 pub mod processor;
 pub mod settings;
 
