@@ -53,8 +53,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           cd target/${{ matrix.target }}/release
-          cp ../../../src/assets/diff.sh .
-          tar -czvf kubediff_${{ matrix.target }}.tar.gz kubediff diff.sh
+          tar -czvf kubediff_${{ matrix.target }}.tar.gz kubediff
           mv kubediff_${{ matrix.target }}.tar.gz ../../../
 
       - name: Package (Windows)
@@ -62,8 +61,7 @@ jobs:
         shell: bash
         run: |
           cd target/${{ matrix.target }}/release
-          cp ../../../src/assets/diff.sh .
-          7z a kubediff_${{ matrix.target }}.zip kubediff.exe diff.sh
+          7z a kubediff_${{ matrix.target }}.zip kubediff.exe
           mv kubediff_${{ matrix.target }}.zip ../../../
 
       - uses: actions/upload-artifact@v4
