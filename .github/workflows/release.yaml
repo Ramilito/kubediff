@@ -11,8 +11,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          token: ${{ secrets.RELEASE_TOKEN }}
       - name: Release
+        id: semantic
         uses: cycjimmy/semantic-release-action@v4
+        with:
+          extra_plugins: |
+            @semantic-release/exec
+            @semantic-release/git
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      - name: Setup Rust
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: dtolnay/rust-toolchain@stable
+      - name: Publish to crates.io
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_RELEASE_TOKEN }}

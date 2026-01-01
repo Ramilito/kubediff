@@ -3,6 +3,12 @@ name = "kubediff"
 version = "1.0.0"
 edition = "2021"
 authors = ["https://github.com/ramilito"]
+description = "A diff tool for Kubernetes manifests"
+license = "MIT"
+repository = "https://github.com/ramilito/kubediff"
+readme = "README.md"
+keywords = ["kubernetes", "diff", "kustomize", "k8s"]
+categories = ["command-line-utilities", "development-tools"]
 
 [lib]
 name = "kubediff"
