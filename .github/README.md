@@ -54,7 +54,7 @@ We will loop over the projects files and run kubectl build, then pipe the output
 
 ### Prerequisite
 
-* yq is needed for less clutter (can be made optional fairly easy)
+No external dependencies required - all tools are bundled with the binary.
 
 ### Installation
 Download and extract the binary.
@@ -105,7 +105,7 @@ kubediff -i
 ```
 ## Roadmap
 
-- [ ] Remove, make optional or include dependency on yq 
+- [x] Remove, make optional or include dependency on yq 
 - [ ] Change theme with input 
 
 ## Troubleshooting
