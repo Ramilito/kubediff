@@ -8,7 +8,7 @@ use std::{
 };
 
 // Import from the library crate
-use kubediff::{LogLevel, Process, Settings};
+use kubediff::{KubeClient, LogLevel, Process, Settings};
 
 use crate::{logger::Logger, print::Pretty};
 use clap::{Parser, ValueEnum};
@@ -48,7 +48,8 @@ pub struct Cli {
     term_width: Option<usize>,
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
     let mut settings = Settings::load().expect("Failed to load config file!");
 
@@ -60,6 +61,18 @@ fn main() -> anyhow::Result<()> {
 
     // Create logger with resolved log level
     let logger = Arc::new(Mutex::new(Logger::new(log_level, args.term_width)));
+
+    // Initialize Kubernetes client
+    let client = match KubeClient::new().await {
+        Ok(c) => c,
+        Err(e) => {
+            logger
+                .lock()
+                .unwrap()
+                .log_error(format!("Failed to connect to Kubernetes cluster: {}", e));
+            return Err(e);
+        }
+    };
 
     // Get target paths using library function
     let targets = Process::get_entries(
@@ -75,7 +88,7 @@ fn main() -> anyhow::Result<()> {
             Pretty::print_path(format!("Path: {}", target), args.term_width);
 
             // Use library to get structured results
-            let result = Process::process_target(&target);
+            let result = Process::process_target(&client, &target).await;
 
             // Handle build errors
             if let Some(error) = result.build_error {

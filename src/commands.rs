@@ -1,40 +1,75 @@
-use std::{
-    fs,
-    io::Write,
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::{fs, path::Path};
 
-use crate::kustomize;
+use serde_json::Value;
+
+use crate::{diff::generate_diff, filter::filter_resource, kube_client::KubeClient, kustomize};
 
 pub struct Commands;
 
 impl Commands {
-    pub fn get_diff(input: &str) -> anyhow::Result<String> {
-        let mut cmd = Command::new("kubectl");
+    /// Get diff for a single Kubernetes resource using kube.rs.
+    ///
+    /// Uses server-side dry-run apply to get the normalized local manifest with
+    /// all server defaults applied, then compares it to the live resource.
+    /// This matches kubectl diff behavior exactly.
+    pub async fn get_diff(client: &KubeClient, input: &str) -> anyhow::Result<String> {
+        // Parse local YAML to JSON
+        let local_value: Value = serde_yaml::from_str(input)?;
 
-        // Use diff.sh if it exists, otherwise use default kubectl diff
-        if let Some(script_path) = get_script() {
-            cmd.env("KUBECTL_EXTERNAL_DIFF", script_path);
+        // Extract resource identifiers for diff header
+        let kind = local_value["kind"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing kind"))?;
+        let name = local_value["metadata"]["name"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing metadata.name"))?;
+        let resource_id = format!("{}/{}", kind, name);
+
+        // Apply local manifest with dry-run to get server-normalized version
+        // This applies all server defaults, just like kubectl diff does
+        let dry_run_result = client.apply_dry_run(&local_value).await?;
+        let mut local_normalized: Value = serde_json::to_value(&dry_run_result)?;
+
+        // Fetch live resource from cluster
+        let api_version = local_value["apiVersion"]
+            .as_str()
+            .ok_or_else(|| anyhow::anyhow!("Missing apiVersion"))?;
+        let namespace = local_value["metadata"]["namespace"].as_str();
+        let live = client
+            .get_live_resource(api_version, kind, namespace, name)
+            .await?;
+
+        match live {
+            None => {
+                // Resource doesn't exist in cluster - show as new
+                filter_resource(&mut local_normalized);
+                let local_yaml = serde_yaml::to_string(&local_normalized)?;
+
+                Ok(generate_diff(&resource_id, "", &local_yaml).unwrap_or_default())
+            }
+            Some(live_obj) => {
+                // Compare normalized local with live
+                let mut live_value: Value = serde_json::to_value(&live_obj)?;
+
+                // Apply filters to both (remove status, managedFields, etc.)
+                filter_resource(&mut live_value);
+                filter_resource(&mut local_normalized);
+
+                // Convert to YAML for diff
+                let live_yaml = serde_yaml::to_string(&live_value)?;
+                let local_yaml = serde_yaml::to_string(&local_normalized)?;
+
+                Ok(generate_diff(&resource_id, &live_yaml, &local_yaml).unwrap_or_default())
+            }
         }
-
-        let mut diff = cmd
-            .arg("diff")
-            .arg("-f")
-            .arg("-")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()?;
-
-        if let Some(stdin) = diff.stdin.as_mut() {
-            stdin.write_all(input.as_bytes())?;
-        }
-
-        let output = diff.wait_with_output()?;
-        let result = String::from_utf8(output.stdout)?;
-        Ok(result)
     }
 
+    /// Build Kubernetes manifests from a target path.
+    ///
+    /// Handles:
+    /// - Single YAML files
+    /// - Kustomize directories (uses embedded kustomize binary)
+    /// - Regular directories (concatenates all YAML files)
     pub fn get_build(target: &str) -> anyhow::Result<String> {
         let path = Path::new(target);
 
@@ -69,17 +104,6 @@ impl Commands {
         }
 
         Ok(combined_output)
-    }
-}
-
-fn get_script() -> Option<String> {
-    let mut path = std::env::current_exe().ok()?;
-    path.pop();
-    path.push("diff.sh");
-    if path.exists() {
-        Some(path.to_str()?.to_string())
-    } else {
-        None
     }
 }
 
