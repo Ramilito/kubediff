@@ -1,5 +1,4 @@
 use colored::Colorize;
-use regex::Regex;
 
 use crate::print::Pretty;
 use kubediff::LogLevel;
@@ -30,15 +29,7 @@ impl Logger {
     }
 
     pub fn log_error(&self, message: String) {
-        let formatted = format_error_message(&message);
-        Pretty::print_error(formatted, self.term_width);
+        let formatted = message.replace("Error", &"Error".red().to_string());
+        Pretty::print_error(format!("{}\n", formatted), self.term_width);
     }
-}
-
-fn format_error_message(error_message: &str) -> String {
-    let re_error_word = Regex::new(r"\bError\b").unwrap();
-    let colored_message = re_error_word.replace_all(error_message, |_: &regex::Captures| {
-        "Error".red().to_string()
-    });
-    format!("{}\n", colored_message)
 }
