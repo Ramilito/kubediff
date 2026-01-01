@@ -5,13 +5,13 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "sed -i 's/^version = \".*\"/version = \"${nextRelease.version}\"/' Cargo.toml"
+        "prepareCmd": "sed -i 's/^version = \".*\"/version = \"${nextRelease.version}\"/' Cargo.toml && cargo generate-lockfile"
       }
     ],
     [
       "@semantic-release/git",
       {
-        "assets": ["Cargo.toml"],
+        "assets": ["Cargo.toml", "Cargo.lock"],
         "message": "chore(release): ${nextRelease.version}"
       }
     ],
