@@ -28,9 +28,22 @@ cli = ["dep:bat", "dep:clap", "dep:colored"]
 anyhow = "1.0.75"
 dirs = "4.0.0"
 glob = "0.3.0"
-rayon = "1.8.0"
 serde = { version = "1.0.142", features = ["derive"] }
 serde_yaml = "0.8.26"
+
+# Kubernetes client
+kube = { version = "1.1.0", features = ["client", "config", "runtime"] }
+k8s-openapi = { version = "0.25", features = ["latest"] }
+
+# Async runtime
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+futures = "0.3"
+
+# Diff generation
+similar = "2.6"
+
+# JSON manipulation for filtering
+serde_json = "1.0"
 
 # CLI-only dependencies (optional)
 bat = { version = "0.24.0", optional = true }

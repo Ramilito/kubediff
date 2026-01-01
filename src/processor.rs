@@ -1,10 +1,10 @@
-use rayon::prelude::*;
+use futures::future::join_all;
 use serde::Deserialize;
 use serde_yaml::Value;
 
 use std::{collections::HashSet, env};
 
-use crate::{commands::Commands, settings::Settings};
+use crate::{commands::Commands, kube_client::KubeClient, settings::Settings};
 
 /// Result of diffing a single Kubernetes resource
 #[derive(Debug, Clone)]
@@ -59,7 +59,7 @@ impl Process {
     }
 
     /// Process a single target and return structured results
-    pub fn process_target(target: &str) -> TargetResult {
+    pub async fn process_target(client: &KubeClient, target: &str) -> TargetResult {
         // Try to get the build output
         let build = match Commands::get_build(target) {
             Ok(b) => b,
@@ -94,41 +94,13 @@ impl Process {
             })
             .collect();
 
-        // Process documents in parallel, collecting results
-        let mut results: Vec<DiffResult> = documents
-            .par_iter()
-            .map(|v| {
-                let string = serde_yaml::to_string(&v).unwrap();
-                let resource_name = v["metadata"]["name"]
-                    .as_str()
-                    .unwrap_or("unknown")
-                    .to_string();
-                let api_version = v["apiVersion"].as_str().unwrap_or("unknown").to_string();
-                let kind = v["kind"].as_str().unwrap_or("unknown").to_string();
-
-                match Commands::get_diff(&string) {
-                    Ok(diff) => {
-                        let diff_option = if diff.is_empty() { None } else { Some(diff) };
-                        DiffResult {
-                            target: target.to_string(),
-                            resource_name,
-                            api_version,
-                            kind,
-                            diff: diff_option,
-                            error: None,
-                        }
-                    }
-                    Err(e) => DiffResult {
-                        target: target.to_string(),
-                        resource_name,
-                        api_version,
-                        kind,
-                        diff: None,
-                        error: Some(e.to_string()),
-                    },
-                }
-            })
+        // Process documents concurrently using async
+        let futures: Vec<_> = documents
+            .iter()
+            .map(|v| process_single_document(client, target, v))
             .collect();
+
+        let mut results: Vec<DiffResult> = join_all(futures).await;
 
         // Add any deserialization errors to the results
         results.extend(deserialization_errors);
@@ -141,10 +113,47 @@ impl Process {
     }
 
     /// Process multiple targets and return all results
-    pub fn process_targets(targets: HashSet<String>) -> Vec<TargetResult> {
-        targets
+    pub async fn process_targets(
+        client: &KubeClient,
+        targets: HashSet<String>,
+    ) -> Vec<TargetResult> {
+        let futures: Vec<_> = targets
             .into_iter()
-            .map(|target| Self::process_target(&target))
-            .collect()
+            .map(|target| async move { Self::process_target(client, &target).await })
+            .collect();
+
+        join_all(futures).await
+    }
+}
+
+async fn process_single_document(client: &KubeClient, target: &str, v: &Value) -> DiffResult {
+    let string = serde_yaml::to_string(&v).unwrap();
+    let resource_name = v["metadata"]["name"]
+        .as_str()
+        .unwrap_or("unknown")
+        .to_string();
+    let api_version = v["apiVersion"].as_str().unwrap_or("unknown").to_string();
+    let kind = v["kind"].as_str().unwrap_or("unknown").to_string();
+
+    match Commands::get_diff(client, &string).await {
+        Ok(diff) => {
+            let diff_option = if diff.is_empty() { None } else { Some(diff) };
+            DiffResult {
+                target: target.to_string(),
+                resource_name,
+                api_version,
+                kind,
+                diff: diff_option,
+                error: None,
+            }
+        }
+        Err(e) => DiffResult {
+            target: target.to_string(),
+            resource_name,
+            api_version,
+            kind,
+            diff: None,
+            error: Some(e.to_string()),
+        },
     }
 }

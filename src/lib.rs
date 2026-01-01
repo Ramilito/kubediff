@@ -1,16 +1,19 @@
 //! kubediff - A library for comparing Kubernetes manifests against live cluster state
 //!
 //! This library provides the core diff logic for comparing local Kubernetes YAML manifests
-//! against what's currently deployed in your cluster. It can be used programmatically
-//! without spawning a subprocess.
+//! against what's currently deployed in your cluster using the kube.rs client library.
 //!
 //! # Example
 //!
 //! ```rust,no_run
-//! use kubediff::{Settings, Process, DiffResult};
+//! use kubediff::{KubeClient, Settings, Process, DiffResult};
 //!
-//! fn main() -> anyhow::Result<()> {
+//! #[tokio::main]
+//! async fn main() -> anyhow::Result<()> {
 //!     let mut settings = Settings::load()?;
+//!
+//!     // Initialize the Kubernetes client
+//!     let client = KubeClient::new().await?;
 //!
 //!     // Get targets from settings or specify directly
 //!     let targets = Process::get_entries(
@@ -21,7 +24,7 @@
 //!     );
 //!
 //!     for target in targets {
-//!         let result = Process::process_target(&target);
+//!         let result = Process::process_target(&client, &target).await;
 //!
 //!         if let Some(error) = result.build_error {
 //!             eprintln!("Build error for {}: {}", target, error);
@@ -49,12 +52,16 @@
 //! ```
 
 pub mod commands;
+pub mod diff;
 pub mod enums;
+pub mod filter;
+pub mod kube_client;
 pub mod kustomize;
 pub mod processor;
 pub mod settings;
 
 // Re-export main types for convenience
 pub use enums::LogLevel;
+pub use kube_client::KubeClient;
 pub use processor::{DiffResult, Process, TargetResult};
 pub use settings::Settings;
