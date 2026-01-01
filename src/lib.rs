@@ -55,6 +55,7 @@ pub mod commands;
 pub mod diff;
 pub mod enums;
 pub mod filter;
+pub mod helm;
 pub mod kube_client;
 pub mod kustomize;
 pub mod processor;

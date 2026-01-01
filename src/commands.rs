@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use serde_json::Value;
 
-use crate::{diff::generate_diff, filter::filter_resource, kube_client::KubeClient, kustomize};
+use crate::{diff::generate_diff, filter::filter_resource, helm, kube_client::KubeClient, kustomize};
 
 pub struct Commands;
 
@@ -69,8 +69,9 @@ impl Commands {
     /// Handles:
     /// - Single YAML files
     /// - Kustomize directories (uses embedded kustomize binary)
+    /// - Helm charts (requires helm_values path)
     /// - Regular directories (concatenates all YAML files)
-    pub fn get_build(target: &str) -> anyhow::Result<String> {
+    pub fn get_build(target: &str, helm_values: Option<&str>) -> anyhow::Result<String> {
         let path = Path::new(target);
 
         // Single file - just read it
@@ -81,6 +82,17 @@ impl Commands {
         // Kustomize directory - use embedded kustomize
         if is_kustomize_directory(target)? {
             return kustomize::build(target);
+        }
+
+        // Helm chart - use system helm with values file
+        if helm::is_helm_directory(target) {
+            return match helm_values {
+                Some(values) => helm::build(target, values),
+                None => Err(anyhow::anyhow!(
+                    "Helm chart detected at '{}' but no --helm-values file provided",
+                    target
+                )),
+            };
         }
 
         // Regular directory - concatenate all YAML files
