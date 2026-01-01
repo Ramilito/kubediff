@@ -1,12 +1,10 @@
+name: Release-build
+
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-  release:
-    types: [created, edited]
-
-name: Main
+    tags:
+      - "v*"
 
 jobs:
   build:
