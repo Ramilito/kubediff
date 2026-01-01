@@ -3,18 +3,20 @@ use std::{
     io::{Error, ErrorKind, Write},
     path::Path,
     process::{Command, Stdio},
-    sync::{Arc, Mutex},
 };
-
-use crate::logger::Logger;
 
 pub struct Commands;
 
 impl Commands {
     pub fn get_diff(input: &str) -> anyhow::Result<String> {
-        let script_path = get_script();
-        let mut diff = Command::new("kubectl")
-            .env("KUBECTL_EXTERNAL_DIFF", script_path)
+        let mut cmd = Command::new("kubectl");
+
+        // Use diff.sh if it exists, otherwise use default kubectl diff
+        if let Some(script_path) = get_script() {
+            cmd.env("KUBECTL_EXTERNAL_DIFF", script_path);
+        }
+
+        let mut diff = cmd
             .arg("diff")
             .arg("-f")
             .arg("-")
@@ -31,13 +33,13 @@ impl Commands {
         Ok(result)
     }
 
-    pub fn get_build(logger: Arc<Mutex<Logger>>, target: &str) -> anyhow::Result<String> {
+    pub fn get_build(target: &str) -> anyhow::Result<String> {
         if Path::new(target).is_file() {
-            return run_command(&["cat", target], logger.clone());
+            return run_command(&["cat", target]);
         }
 
         if is_kustomize_directory(target)? {
-            return run_command(&["kubectl", "kustomize", target], logger.clone());
+            return run_command(&["kubectl", "kustomize", target]);
         }
 
         let mut combined_output = String::new();
@@ -46,7 +48,7 @@ impl Commands {
             if entry.path().is_file() {
                 let e = entry.path();
                 let file_path = e.to_str().unwrap();
-                let output = run_command(&["cat", file_path], logger.clone())?;
+                let output = run_command(&["cat", file_path])?;
                 combined_output.push_str(&output);
             }
         }
@@ -55,14 +57,18 @@ impl Commands {
     }
 }
 
-fn get_script() -> String {
-    let mut path = std::env::current_exe().unwrap();
+fn get_script() -> Option<String> {
+    let mut path = std::env::current_exe().ok()?;
     path.pop();
     path.push("diff.sh");
-    path.to_str().unwrap().to_string()
+    if path.exists() {
+        Some(path.to_str()?.to_string())
+    } else {
+        None
+    }
 }
 
-fn run_command(args: &[&str], logger: Arc<Mutex<Logger>>) -> anyhow::Result<String> {
+fn run_command(args: &[&str]) -> anyhow::Result<String> {
     let output = Command::new(args[0])
         .args(&args[1..])
         .stdin(Stdio::piped())
@@ -75,7 +81,6 @@ fn run_command(args: &[&str], logger: Arc<Mutex<Logger>>) -> anyhow::Result<Stri
         Ok(String::from_utf8(output.stdout)?)
     } else {
         let stderr = String::from_utf8(output.stderr)?;
-        logger.lock().unwrap().log_error(stderr.clone());
         Err(Error::new(
             ErrorKind::Other,
             format!("Build failed with error: {}", stderr),
