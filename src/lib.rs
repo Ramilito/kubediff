@@ -1,4 +1,4 @@
-//! kubediff - A library for diffing Kubernetes manifests against live cluster state
+//! kubediff - A library for comparing Kubernetes manifests against live cluster state
 //!
 //! This library provides the core diff logic for comparing local Kubernetes YAML manifests
 //! against what's currently deployed in your cluster. It can be used programmatically
