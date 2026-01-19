@@ -59,9 +59,13 @@ impl Process {
     }
 
     /// Process a single target and return structured results
-    pub async fn process_target(client: &KubeClient, target: &str) -> TargetResult {
+    pub async fn process_target(
+        client: &KubeClient,
+        target: &str,
+        helm_values: Option<&str>,
+    ) -> TargetResult {
         // Try to get the build output
-        let build = match Commands::get_build(target) {
+        let build = match Commands::get_build(target, helm_values) {
             Ok(b) => b,
             Err(e) => {
                 return TargetResult {
@@ -116,10 +120,14 @@ impl Process {
     pub async fn process_targets(
         client: &KubeClient,
         targets: HashSet<String>,
+        helm_values: Option<&str>,
     ) -> Vec<TargetResult> {
         let futures: Vec<_> = targets
             .into_iter()
-            .map(|target| async move { Self::process_target(client, &target).await })
+            .map(|target| {
+                let hv = helm_values.map(|s| s.to_string());
+                async move { Self::process_target(client, &target, hv.as_deref()).await }
+            })
             .collect();
 
         join_all(futures).await

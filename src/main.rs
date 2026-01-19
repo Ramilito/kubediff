@@ -46,6 +46,9 @@ pub struct Cli {
     log: Option<CliLogLevel>,
     #[clap(short, long, value_parser)]
     term_width: Option<usize>,
+    /// Path to Helm values file (required for Helm charts)
+    #[clap(long, value_parser)]
+    helm_values: Option<String>,
 }
 
 #[tokio::main]
@@ -88,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
             Pretty::print_path(format!("Path: {}", target), args.term_width);
 
             // Use library to get structured results
-            let result = Process::process_target(&client, &target).await;
+            let result = Process::process_target(&client, &target, args.helm_values.as_deref()).await;
 
             // Handle build errors
             if let Some(error) = result.build_error {
