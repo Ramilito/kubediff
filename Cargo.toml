@@ -1,6 +1,6 @@
 [package]
 name = "kubediff"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2021"
 authors = ["https://github.com/ramilito"]
 description = "A diff tool for Kubernetes manifests"
