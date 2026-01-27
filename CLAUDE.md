@@ -46,7 +46,7 @@ CLI args → Settings (config.yaml) → Process::get_entries() → resolve paths
 - `processor.rs` - Main orchestration, processes targets and aggregates results
 - `kube_client.rs` - Kubernetes client wrapper using kube.rs with dynamic API discovery
 - `commands.rs` - Executes kustomize build and generates diffs
-- `kustomize.rs` - Manages embedded kustomize binary (extracted to ~/.cache/kubediff/)
+- `kustomize.rs` - Wrapper for system kustomize binary (must be in PATH)
 - `filter.rs` - Removes server-managed fields (status, managedFields, generation, resourceVersion, uid, specific annotations)
 - `settings.rs` - Config loading and glob pattern resolution with environment suffix support
 - `diff.rs` - Unified diff generation using the `similar` crate
@@ -58,9 +58,8 @@ CLI args → Settings (config.yaml) → Process::get_entries() → resolve paths
 
 ## Build System Notes
 
-- `build.rs` downloads kustomize v5.8.0 at compile time and embeds it into the binary
 - Cross-compilation configured in `Cross.toml` for ARM64 Linux targets
-- No external tool dependencies at runtime (kustomize is embedded)
+- Requires `kustomize` to be available in PATH at runtime
 
 ## Testing
 
